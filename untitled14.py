@@ -10,7 +10,6 @@ from numpy.polynomial import Polynomial
 
 import matplotlib.pyplot as plt
 
-from scipy.optimize import curve_fit
 
 class granulation_background:
     
@@ -50,7 +49,7 @@ class granulation_background:
         self.tau_sun_s = float(tau_sun_s)
         
         #weird constants
-        self.sigma_sun =1000  #I think this will end up being calculated using code so define inside the class and change later
+        self.sigma_sun =10  #I think this will end up being calculated using code so define inside the class and change later
         #setting sigma_sun = 1 reverts the function back to the proportional relationship 
         
         self.max_rms_amplitude_sun = 2.1  #
@@ -64,7 +63,12 @@ class granulation_background:
         self.luminosity_ratio = self.calc_luminosity_ratio() # L / solar luminosity, alpha L
         self.tau_gran_s = self.calc_tau_gran_s() # granulation time scale
         self.sigma_gran = self.calc_sigma_gran() # amplitude thing
-        self.psd_per_uHz = self.calc_granulation_psd_per_uHz() #array of power spectrum value at each frequency in freq_uHz
+        
+        
+        
+        #self.psd_per_uHz = self.calc_granulation_psd_per_uHz() #array of power spectrum value at each frequency in freq_uHz
+        self.psd_per_uHz = self.calc_granulation_psd_per_Uhz_canvas_equation()
+
 
         self.plot_granulation_psd() #plots granulation spectru
         
@@ -223,11 +227,49 @@ class granulation_background:
         freq_uHz = np.asarray(self.freq_uHz)
         freq_Hz = freq_uHz * 1e-6
 
-        demominator_power  = 4
+        demominator_power  = 2
         
         psd_per_Hz = (4.0 * (self.sigma_gran ** 2) * self.tau_gran_s) / (1.0 + (2.0 * np.pi * freq_Hz * self.tau_gran_s) ** demominator_power)
-        psd_per_uHz = psd_per_Hz * 1e-6 #converts to uHz 
+        psd_per_uHz = psd_per_Hz * 1e6 #converts to uHz 
         return psd_per_uHz
+
+    def calc_granulation_psd_per_Uhz_canvas_equation(self):
+        
+        """
+        Same function as calc_granulation_psd_per_uHz but uses the equation provided on canvas instead of Ball et all
+        Removes granulation time scale from the numerator 
+        
+        Calculates power spectrum value at an array of given frequencies using l
+            P(ν) = 4*sigma^2 / (1 + (2πνtau)^2)
+            
+        Returns array of power spectrum values at each frequency
+            
+        Has to be done in Hz because the term (2πνtau)^2) needs to be unitless, therefore the frequency needs to be s^-1 to cancel tau s
+
+
+        Parameters
+        ----------
+        freq_uHz : array
+            Frequency input array in microHz 
+        tau_gran_s : float
+            Granulation timescale in seconds
+        sigma_gran : float
+            Granulation amplitude of given star
+
+        Returns
+        -------
+        psd_per_uHz : array
+            power spectrum evaluated at microHz
+        """
+        freq_uHz = np.asarray(self.freq_uHz)
+        freq_Hz = freq_uHz * 1e-6
+
+        demominator_power  = 4
+        
+        psd_per_Hz = (4.0 * (self.sigma_gran ** 2)) / (1.0 + (2.0 * np.pi * freq_Hz * self.tau_gran_s) ** demominator_power)
+        psd_per_uHz = psd_per_Hz * 1e6 #converts to uHz 
+        return psd_per_uHz
+        
     
     def plot_granulation_psd(self):
         """
@@ -339,9 +381,9 @@ class granulation_background:
         
         
         
-mass_star = 0.553
-r_star = 0.529
-teff_star = 3706
+mass_star = 1.223
+r_star = 1.357
+teff_star = 6325
 nu_max_sun_uHz = 3090.0
 teff_sun_K = 5772.0
 tau_sun_s = 250
