@@ -50,14 +50,14 @@ class granulation_background:
         self.tau_sun_s = float(tau_sun_s)
         
         #weird constants
-        self.sigma_sun =1  #I think this will end up being calculated using code so define inside the class and change later
+        self.sigma_sun =1000  #I think this will end up being calculated using code so define inside the class and change later
         #setting sigma_sun = 1 reverts the function back to the proportional relationship 
         
         self.max_rms_amplitude_sun = 2.1  #
         
         #calculate star properties for granulation
         
-        self.freq_uHz = np.linspace(0.1, 9000.0, 50000) #range of frequencies where power spectrum is evaluated
+        self.freq_uHz = np.linspace(0.1, 90000.0, 500000) #range of frequencies where power spectrum is evaluated
 
         
         self.nu_max_star_uHz = self.calc_nu_max_uHz() #v max
@@ -223,7 +223,7 @@ class granulation_background:
         freq_uHz = np.asarray(self.freq_uHz)
         freq_Hz = freq_uHz * 1e-6
 
-        demominator_power  = 2
+        demominator_power  = 4
         
         psd_per_Hz = (4.0 * (self.sigma_gran ** 2) * self.tau_gran_s) / (1.0 + (2.0 * np.pi * freq_Hz * self.tau_gran_s) ** demominator_power)
         psd_per_uHz = psd_per_Hz * 1e-6 #converts to uHz 
@@ -294,7 +294,7 @@ class granulation_background:
         
     def calc_maximum_rms_amplitude_radial(self):
         """
-        For a given star, calculates beta factor using  equation 16 from Ball et al
+        For a given star, calculates the maximum rms amplitude for radial mode using equation 16 from Ball et al
 
         Returns
         -------
@@ -310,12 +310,18 @@ class granulation_background:
     
     def calc_envelope_gaussian_width(self):
         """
+        Calculates the envelope gaussian width using equation 19 and the line below equation 20 from Ball et al
+        
+        Envelop = 0.66 * (Vmax)^0.88
+        
+        Parameters input are in units of microHz hence the conversion terms are removed from the Ball et al equations. 
+        
         
 
         Returns
         -------
-        width_envelope : TYPE
-            DESCRIPTION.
+        width_envelope : float
+            Gaussian width of the evelope .
 
         """
         
@@ -333,9 +339,9 @@ class granulation_background:
         
         
         
-mass_star = 1.21
-r_star = 1.27
-teff_star = 6163
+mass_star = 0.553
+r_star = 0.529
+teff_star = 3706
 nu_max_sun_uHz = 3090.0
 teff_sun_K = 5772.0
 tau_sun_s = 250
