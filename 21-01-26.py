@@ -15,7 +15,7 @@ class granulation_background:
     
     
     
-    def __init__(self, mass_star, r_star, teff_star, nu_max_sun_uHz, teff_sun_K, tau_sun_s):
+    def __init__(self, mass_star, r_star, teff_star, nu_max_sun_uHz, teff_sun_K, tau_sun_s, star_name ="" , sun_sigma = 1):
         """
         
 
@@ -33,15 +33,24 @@ class granulation_background:
             Effective temperature of the sun in kelvin.
         tau_sun_s : float
             granulation time scale of the sun in seconds.
+        star_name : string
+            name of star, used for plots. Default  ""
+        sun_sigma : float
+            Granulation ampltiude of sun, default = 1
+        
+            
 
         
         """
         
         
         #star properties
+        self.star_name = star_name
+        
         self.mass_star = float(mass_star)
         self.r_star = float(r_star)
         self.teff_star = float(teff_star)
+        
         
         #constants
         self.nu_max_sun_uHz = float(nu_max_sun_uHz)
@@ -49,7 +58,7 @@ class granulation_background:
         self.tau_sun_s = float(tau_sun_s)
         
         #weird constants
-        self.sigma_sun =23  #I think this will end up being calculated using code so define inside the class and change later
+        self.sigma_sun = float(sun_sigma)  #I think this will end up being calculated using code so define inside the class and change later
         #setting sigma_sun = 1 reverts the function back to the proportional relationship 
         
         self.max_rms_amplitude_sun = 2.1  #
@@ -59,28 +68,52 @@ class granulation_background:
         self.freq_uHz = np.linspace(0.1, 10000.0, 500000) #range of frequencies where power spectrum is evaluated
 
         
-        self.nu_max_star_uHz = self.calc_nu_max_uHz() #v max
+        self.nu_max_ratio = self.calc_nu_max_ratio() #vmax ratio 
+        self.nu_max_star_uHz = self.nu_max_ratio * self.nu_max_sun_uHz #v max
+        
         self.luminosity_ratio = self.calc_luminosity_ratio() # L / solar luminosity, alpha L
+        
         self.tau_gran_s = self.calc_tau_gran_s() # granulation time scale
-        self.sigma_gran = self.calc_sigma_gran() # amplitude thing
         
+        self.sigma_gran_ratio = self.calc_sigma_gran_ratio() # amplitude thing
+        self.sigma_gran = self.sigma_gran_ratio*self.sigma_sun
         
-        
-        self.psd_per_uHz = self.calc_granulation_psd_per_uHz() #array of power spectrum value at each frequency in freq_uHz
-        #self.psd_per_uHz = self.calc_granulation_psd_per_Uhz_canvas_equation()
-
-
-        self.plot_granulation_psd() #plots granulation spectru
         
         #calculate star properties for oscillation
         
+        self.print_debug()
+        
+    def model_comparison(self):
+        
+        self.psd_per_uHz = self.calc_granulation_psd_per_uHz() #array of power spectrum value at each frequency in freq_uHz
+        self.plot_granulation_psd() #plots granulation spectru
+
+        self.psd_per_uHz = self.calc_granulation_psd_per_uHz_test()
+        self.plot_granulation_psd()
 
 
+    def run_granulation(self):
+        
+        self.psd_per_uHz = self.calc_granulation_psd_per_uHz()     
+        self.plot_granulation_psd() #plots granulation spectru
 
+        
+        
+        
+    def print_debug(self):
+        
+        
+        print("")
+        print(f"For the star {self.star_name}, with properties M={self.mass_star} Msun, R={self.r_star} Rsun, Teff={self.teff_star} K ")
+        print(f"nu_max={self.nu_max_star_uHz:.0f}, nu_max ratio = {self.nu_max_ratio:2f} ")
+        print(f"star granulation amplitude = {self.sigma_gran:.2f}, granulation ratio = {self.sigma_gran_ratio:2f} ")
+        print(f"Granulation time scale = {self.tau_gran_s}")
+        
     
-    def calc_nu_max_uHz(self):
+    
+    def calc_nu_max_ratio(self):
         """
-        Calculate nu_max using scaling relationship
+        Calculate nu_max ratio using scaling relationship
 
         
         nu_max / nu_max_sun = (M/Msun) * (R/Rsun)^(-2) * (Teff/Teff_sun)^(-1/2)
@@ -100,9 +133,9 @@ class granulation_background:
             nu_max in microHz
         """
                 
-        nu_max = self.nu_max_sun_uHz * (self.mass_star / (self.r_star**2)) * (self.teff_star / self.teff_sun_K) ** (-0.5)
+        nu_max_ratio =  (self.mass_star / (self.r_star**2)) * (self.teff_star / self.teff_sun_K) ** (-0.5)
 
-        return nu_max
+        return nu_max_ratio
     
     def calc_nu_nl(self):
         
@@ -159,9 +192,9 @@ class granulation_background:
 
         return tau_gran
         
-    def calc_sigma_gran(self):
+    def calc_sigma_gran_ratio(self):
         """
-        Compute granulation amplitude sigma_gran using scaling relationship to remove constants from proportionallity constant. Ball et al equation 22
+        Compute granulation amplitude ratio  using scaling relationship to remove constants from proportionallity constant. Ball et al equation 22 for proportional relationship
 
         Scaling relationship of granulation amplitude,
             sigma_star/ sigma_sun =
@@ -181,8 +214,7 @@ class granulation_background:
             Stellar mass in solar masses
         teff_star : float
             Effective temperature in Kelvin
-        sigma_sun : float
-            Granulation amplitude of sun in 
+        
 
         Returns
         -------
@@ -195,9 +227,9 @@ class granulation_background:
         nu_ratio = self.nu_max_star_uHz / self.nu_max_sun_uHz
         sigma_ratio = (self.luminosity_ratio ** 2) * (self.mass_star ** -3) * (self.teff_star / self.teff_sun_K) ** (-5.5) * (nu_ratio)
         
-        sigma_star = sigma_ratio * self.sigma_sun
+        
 
-        return sigma_star
+        return sigma_ratio
     
     
     def calc_granulation_psd_per_uHz(self):
@@ -233,48 +265,19 @@ class granulation_background:
         psd_per_uHz = psd_per_Hz * 1e-6 #converts to uHz 
         return psd_per_uHz
 
-    def calc_granulation_psd_per_Uhz_canvas_equation(self):
+
+    def calc_granulation_psd_per_uHz_test(self):
         
-        """
-        Same function as calc_granulation_psd_per_uHz but uses the equation provided on canvas instead of Ball et all
-        Removes granulation time scale from the numerator 
-        
-        Calculates power spectrum value at an array of given frequencies using l
-            P(ν) = 4*sigma^2 / (1 + (2πνtau)^2)
-            
-        Returns array of power spectrum values at each frequency
-            
-        Has to be done in Hz because the term (2πνtau)^2) needs to be unitless, therefore the frequency needs to be s^-1 to cancel tau s
-
-
-        Parameters
-        ----------
-        freq_uHz : array
-            Frequency input array in microHz 
-        tau_gran_s : float
-            Granulation timescale in seconds
-        sigma_gran : float
-            Granulation amplitude of given star
-
-        Returns
-        -------
-        psd_per_uHz : array
-            power spectrum evaluated at microHz
-        """
         freq_uHz = np.asarray(self.freq_uHz)
         freq_Hz = freq_uHz * 1e-6
-
-        demominator_power  = 4
         
-        psd_per_Hz = (4.0 * (self.sigma_gran ** 2)) / (1.0 + (2.0 * np.pi * freq_Hz * self.tau_gran_s) ** demominator_power)
-        psd_per_uHz = psd_per_Hz * 1e6 #converts to uHz 
+        psd_per_Hz = (4.0 * (self.sigma_gran ** 2) * self.tau_gran_s) / (1.0 + ((2.0 * np.pi * freq_Hz * self.tau_gran_s) ** 2) + ((2.0 * np.pi * freq_Hz * self.tau_gran_s) ** 4))
+        
+        psd_per_uHz = psd_per_Hz * 1e-6 #converts to uHz 
         return psd_per_uHz
+            
+            
         
-    
-        
-        
-        
-    
     def plot_granulation_psd(self):
         """
         Plot granulation powers spectrum P(nu) at range of frequencies and outputs data
@@ -309,11 +312,11 @@ class granulation_background:
         plt.xlabel(r"Frequency $\nu$ ($\mu$Hz)")
         plt.ylabel(r"Granulation power, ppm^2 / µHz")
         plt.title(
-            f"Granulation Power Spectrum \n"
+            f"Granulation Power Spectrum for star {self.star_name}\n"
             f"M={self.mass_star} Msun, R={self.r_star} Rsun, Teff={self.teff_star} K ,L = {self.luminosity_ratio:.2f} \n"
             f"nu_max={self.nu_max_star_uHz:.0f} µHz, tau={self.tau_gran_s:.0f}s, star granulation amplitude = {self.sigma_gran:.2f}\n "
-            f"sun amplitude = {self.sigma_sun}, sun nu_max = {self.nu_max_sun_uHz:.2f}\n"
-            
+            f"granulation amplitude ratio = {self.sigma_gran_ratio:2f}, vMax ratio = {self.nu_max_ratio:2f} \n"
+            f"sun amplitude = {self.sigma_sun}, sun nu_max = {self.nu_max_sun_uHz:.2f}"
         )
         plt.legend()
         plt.tight_layout()
@@ -406,18 +409,47 @@ class osciillation_stuff:
         
         
         
-        
-        
-    
-        
-        
-        
-mass_star = 1.223
-r_star = 1.357
-teff_star = 6325
 nu_max_sun_uHz = 3090.0
 teff_sun_K = 5772.0
-tau_sun_s = 250
+tau_sun_s = 214      
+        
+    
+        
+#kepler 410 (canvas useful spectrum star) sun amplitude = 23 
+sun_sigma = 23
+mass_star,  r_star, teff_star   = 1.223, 1.357, 6325
+star_name = "kepler 410"
+star = granulation_background(mass_star, r_star, teff_star, nu_max_sun_uHz, teff_sun_K, tau_sun_s,star_name, sun_sigma )
+
+star.model_comparison()
+
+
+nu_max_sun_uHz = 3104.0
+teff_sun_K = 5772.0
+tau_sun_s = 250  
+
+
+#All values taken from  Karoff 2013
+#KIC 6603624
+sun_sigma = 62.4
+mass_star,  r_star, teff_star   =  1.01, 1.15, 5416
+star_name = "KIC 6603624"
+#star = granulation_background(mass_star, r_star, teff_star, nu_max_sun_uHz, teff_sun_K, tau_sun_s,star_name, sun_sigma )
+
+#KIC  6933899
+mass_star,  r_star, teff_star   = 1.10, 1.58, 5616
+star_name = "KIC  6933899"
+#star = granulation_background(mass_star, r_star, teff_star, nu_max_sun_uHz, teff_sun_K, tau_sun_s,star_name, sun_sigma )
+
+
+#KIC 11244118
+mass_star,  r_star, teff_star   = 1.01, 1.55, 5507
+star_name = "KIC 11244118"
+#star = granulation_background(mass_star, r_star, teff_star, nu_max_sun_uHz, teff_sun_K, tau_sun_s,star_name, sun_sigma)
+
 
     
-star = granulation_background(mass_star, r_star, teff_star, nu_max_sun_uHz, teff_sun_K, tau_sun_s)
+
+
+
+    
