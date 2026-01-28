@@ -16,6 +16,8 @@ I have begun to incorporate Joel's code into Max's OOP code, but this is not pol
 I have attempted to use comments to explain how different aspects work, this is also unpolished and unfinished.
 
 Some values, such as sun_sigma, may be changed later on.
+
+To use, change the star_index variable to the index of your desired star from the stellar_data array, remove the loop currently there and run the code.
 '''
 # =!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!=!
 
