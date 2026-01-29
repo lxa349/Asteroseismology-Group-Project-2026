@@ -7,7 +7,6 @@ Created on Thu Jan 29 15:37:38 2026
 
 import numpy as np
 # from numpy.polynomial import Polynomial
-from astropy.io import fits
 import matplotlib.pyplot as plt
 
 class power_spectrum:
@@ -57,11 +56,15 @@ class power_spectrum:
         self.sun_facule_tau = float(sun_facule_tau)
         self.sun_facule_sigma = float(sun_facule_sigma)
         
+        self.sun_max_rms_amplitude = 2.1  
+        
+        
+        
         #line space constants
         
         self.freq_powerspectrum_uHz = np.linspace(0.1, 10000.0, 500000) #range of frequencies where power spectrum is evaluated
-        self.angular_degree = np.linspace(0,3,4) #List of angular degrees for oscillations 
-        self.radial_mode = np.linspace(0,30,31) #list of radial modes for oscillations
+        self.angular_degree = np.linspace(0,3,4) #List of angular degrees l for oscillations 
+        self.radial_mode = np.linspace(0,30,31) #list of radial modes n for oscillations
         
         self.visibilites = [1, 1.505, 0.620, 0.075]
         
@@ -93,38 +96,22 @@ class power_spectrum:
         self.sun_delta_nu = 135.1
         self.epsilon= 1.55
         
+        self.star_delta_nu = self.sun_delta_nu * (self.star_mass**0.5) * (self.star_radius**(-1.5))
         
-        self.alpha = self.width_parameter(2.95, 0.39)
-        self.width_alpha = self.width_parameter(3.08, 3.32)
-        self.delta_width_dip = self.width_parameter(-0.47, 0.62)
-        self.W_dip = self.width_parameter(4637, -141)
-        self.nu_dip = self.width_parameter(2984, 60)
+        self.max_rms_amplitude_radial_ratio = self.calc_maximum_rms_amplitude_radial_ratio()
+        self.star_max_rms_amplitude_radial = self.max_rms_amplitude_radial_ratio *  self.sun_max_rms_amplitude
         
-        
+        self.star_standev_envelop = self.calc_envelope_width()
         
         
-        
-    def calc_width_parameter(self, a, b):
-        """
+        #line width constants from paper
+        self.alpha = self.calc_width_parameter(2.95, 0.39)
+        self.width_alpha = self.calc_width_parameter(3.08, 3.32)
+        self.delta_width_dip = self.calc_width_parameter(-0.47, 0.62)
+        self.W_dip = self.calc_width_parameter(4637, -141)
+        self.nu_dip = self.calc_width_parameter(2984, 60)
         
 
-        Parameters
-        ----------
-        a : float
-            Line width constants .
-        b : float
-            Line width constants.
-
-        Returns
-        -------
-        width_param : float
-            Line width.
-
-        """
-        
-        width_param = a*(self.nu_max_ratio) + b 
-        
-        return width_param
                        
                        
         
@@ -155,6 +142,8 @@ class power_spectrum:
         self.granulation_component = self.calc_component_psd( self.star_granulation_sigma, self.star_granulation_tau)
         self.plot_granulation_psd()
         
+        return self.granulation_component
+        
         
     def multi_component(self):
         """
@@ -180,7 +169,8 @@ class power_spectrum:
         
         self.plot_multi_component_psd()
 
-        
+    
+    
         
         
         
@@ -373,6 +363,140 @@ class power_spectrum:
         psd_per_uHz = psd_per_Hz * 1e-6
         
         return psd_per_uHz
+    
+    def calc_nu_nl(self, n,l):
+        
+        nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon)
+        
+        return nu_nl
+    
+    def calc_width_nl(self, n, l):
+        
+        nu_nl = self.calc_nu_nl(n,l)
+        
+        line_width = ((self.alpha * np.log(nu_nl / self.star_nu_max)) + np.log(self.width_alpha)) + (np.log(self.delta_width_dip)/(1 + (((2 * np.log(nu_nl/self.nu_dip))/(np.log(self.W_dip/self.star_nu_max)))**2)))
+        
+        width_nl = np.exp(line_width)
+        
+        return width_nl
+    
+    def calc_envelope_width(self):
+        """
+        Calculates the envelope gaussian width using equation 19 and the line below equation 20 from Ball et al
+        
+        Envelop = 0.66 * (Vmax)^0.88
+        
+        Parameters input are in units of microHz hence the conversion terms are removed from the Ball et al equations. 
+        
+
+        Returns
+        -------
+        None.
+
+        """
+        
+        envelope_FWHM = 0.66 * (self.star_nu_max**0.88)
+        
+        if self.star_teff > self.sun_teff:
+            envelope_FWHM = envelope_FWHM * (1+6e-4 * (self.star_teff-self.sun_teff))
+            
+        width_envelope = envelope_FWHM / (2 * np.sqrt(2*np.log(2)))
+ 
+        return width_envelope
+
+    def calc_powder_density(self):
+        
+        n_min, n_max =  self.calc_n_min_max()
+        
+        power_density_oscillations = np.zeros(len(self.freq_powerspectrum_uHz)) #creates base array same size as frequency arraay 
+        n_min_max_linspace = np.linspace(min(n_min), max(n_max), (max(n_max)-min(n_min))+1) #lin space of n values  to itterate  over
+        
+        for l in self.angular_degree: #itterates over all possible l angular degrees
+            
+            for n in n_min_max_linspace: #itterates over all possible n radial degrees 
+                
+                nu_nl = self.calc_nu_nl(n,l) 
+                width_nl = self.calc_width_nl(n, l)
+                
+                nl_rms_amplitude_radial = self.calc_nl_rms_amplitude_radial(nu_nl)
+                
+                amplitude_nl = self.visibilites[int(l)] * nl_rms_amplitude_radial
+                
+                power_amplitude = calc_power_amplitude(amplitude_nl, width_nl)
+                lorentz_value = calc_lorentz(self.freq_powerspectrum_uHz, nu_nl, width_nl)
+                
+                power_density_oscillations +=(power_amplitude*lorentz_value)
+                
+        return power_density_oscillations
+                
+                
+                
+                
+                
+    def calc_maximum_rms_amplitude_radial_ratio(self):
+        
+        power = -0.093
+        t_red_star = 890
+        delta_t = 1250
+        dwarf_suppression_beta = 1 - np.exp((self.star_teff - t_red_star)/(delta_t))
+
+        star_max_rms_amplitude_ratio=  dwarf_suppression_beta * self.luminosity_ratio *(self.star_mass**-1) * ((self.star_teff / self.sun_teff) ** (-2))   
+        7*(self.luminosity_ratio**power)
+        
+        return star_max_rms_amplitude_ratio
+        
+    def calc_nl_rms_amplitude_radial(self, nu_nl):
+        
+        
+        star_rms_amplitude = (((self.star_max_rms_amplitude_radial ** 2) * np.exp(-((nu_nl-self.star_nu_max)**2)/(2*(self.star_standev_envelop**2))))**0.5)
+        
+        return star_rms_amplitude
+        
+        
+        
+    def calc_n_min_max(self):
+        
+        n_min = []
+        n_max = []
+        
+        
+        
+        nu_envelope_min = self.star_nu_max - (3*self.star_standev_envelop)
+        nu_envelope_max = self.star_nu_max + (3*self.star_standev_envelop)
+        
+        for i in self.angular_degree:
+            
+            n_min.append(int((nu_envelope_min/self.star_delta_nu) - ((i/2) + self.epsilon)))
+            n_max.append(int((nu_envelope_max/self.star_delta_nu) - ((i/2) + self.epsilon)))
+            
+        return n_min, n_max
+        
+        
+
+        
+        
+    def calc_width_parameter(self, a, b):
+        """
+        
+
+        Parameters
+        ----------
+        a : float
+            Line width constants .
+        b : float
+            Line width constants.
+
+        Returns
+        -------
+        width_param : float
+            Line width.
+
+        """
+        
+        width_param = a*(self.nu_max_ratio) + b 
+        
+        return width_param
+    
         
     def plot_granulation_psd(self):
         """
@@ -442,7 +566,15 @@ class power_spectrum:
         plt.tight_layout()
         plt.show()
 
+def calc_power_amplitude(amp,width):
+    
+    x = (2/np.pi)*((amp**2)/width)
+    return x 
         
+def calc_lorentz(freq, centroid, FWHM):
+    
+    x = (1/np.pi) * ((FWHM/2) / ((freq - centroid)**2 + (FWHM/2)**2))
+    return x 
         
         
 star_mass, star_radius, star_teff = 1.223, 1.357, 6325
@@ -456,9 +588,22 @@ sun_granulation_sigma = 23
 
 
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
-star.single_component()
+background_psd = star.single_component()
+oscillation_psd = star.calc_powder_density()
+total_psd = background_psd + oscillation_psd
+
+plt.loglog(star.freq_powerspectrum_uHz, total_psd, color = 'blue', label = "power spectrum")
+plt.axvline(star.star_nu_max, ls = '--', color = 'r', label = "nu_max")
+plt.grid(which='major')
+plt.title("Power Spectrum - Granulation and Oscillations")
+plt.ylabel("Power (ppm^2 Hz^-1)")
+plt.xlabel("Frequency (uHz)")
+plt.legend()
+plt.show()
 
 
+
+"""
 sun_granulation_tau = 214.3
 sun_granulation_sigma = 62.4
 
@@ -467,5 +612,5 @@ sun_facule_sigma = 50.1
 
 star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma,  star_name , sun_facule_tau , sun_facule_sigma )
 star2.multi_component()     
-        
+"""
         
