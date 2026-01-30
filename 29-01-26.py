@@ -3,7 +3,10 @@
 Created on Thu Jan 29 15:37:38 2026
 
 @author: mxt216
+
 """
+
+
 
 import numpy as np
 # from numpy.polynomial import Polynomial
@@ -112,68 +115,59 @@ class power_spectrum:
         self.nu_dip = self.calc_width_parameter(2984, 60)
         
 
-                       
-                       
-        
-        
-        
-        
-        
-            
-            
-            
 
-            
-        
-        
-        
-        #oscillation stuff
-        
     def single_component(self):
         """
-        Models the background as one component only due to granulation
-        Plot of power spectrum due to granulation  
+        Models the the background as one component due to granulation
+
+        Returns
+        -------
+        granulation_component : arraay
+            granulation component of background PSD .
+        
+        total_background : array
+            Total backgorund pSD due to all background components
 
         """
         
+
+        granulation_component = self.calc_component_psd( self.star_granulation_sigma, self.star_granulation_tau)
         
+        total_background = granulation_component
         
-        
-        self.granulation_component = self.calc_component_psd( self.star_granulation_sigma, self.star_granulation_tau)
-        self.plot_granulation_psd()
-        
-        return self.granulation_component
+        return total_background, granulation_component
         
         
     def multi_component(self):
         """
-        Models the background as two components. One from facules and granuales.
-        Plots the total background spectrum 
-        
-        Assumes that the facule and granulation amplitudes / timescales scale in the same way as granulation.
+        Models the background as two components. One from granulation, one from facule
 
-        
+        Returns
+        -------
+        total_background : array
+            Total backgorund pSD due to all background components
+        facule_component : array
+            facule component of background PSD
+            
 
         """
+       
         
         
         self.star_facule_sigma = self.sigma_ratio * self.sun_granulation_sigma
         self.star_facule_tau = self.star_tau_ratio * self.sun_facule_tau
         
         
-        self.granulation_component = self.calc_component_psd( self.star_granulation_sigma, self.star_granulation_tau)
+        granulation_component = self.calc_component_psd( self.star_granulation_sigma, self.star_granulation_tau)
         
-        self.facule_component = self.calc_component_psd( self.star_facule_sigma, self.star_facule_tau)
+        facule_component = self.calc_component_psd( self.star_facule_sigma, self.star_facule_tau)
         
-        self.total_background = self.granulation_component + self.facule_component
+        total_background = granulation_component + facule_component
         
-        self.plot_multi_component_psd()
-
+        return total_background, granulation_component, facule_component
+        
+        
     
-    
-        
-        
-        
     def calc_nu_max_ratio(self):
         """
         Calculate nu_max ratio using scaling relationship
@@ -436,12 +430,11 @@ class power_spectrum:
     def calc_maximum_rms_amplitude_radial_ratio(self):
         
         power = -0.093
-        t_red_star = 890
+        t_red_star = 8900
         delta_t = 1250
         dwarf_suppression_beta = 1 - np.exp((self.star_teff - t_red_star)/(delta_t))
 
         star_max_rms_amplitude_ratio=  dwarf_suppression_beta * self.luminosity_ratio *(self.star_mass**-1) * ((self.star_teff / self.sun_teff) ** (-2))   
-        7*(self.luminosity_ratio**power)
         
         return star_max_rms_amplitude_ratio
         
@@ -582,15 +575,18 @@ star_name = "Kepler 410"
 sun_nu_max = 3090
 sun_teff = 5772.0
 sun_granulation_tau = 214
-sun_granulation_sigma = 23
+sun_granulation_sigma = 63
 
 
 
 
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
-background_psd = star.single_component()
+
+total_background, granulation_component = star.single_component()
 oscillation_psd = star.calc_powder_density()
-total_psd = background_psd + oscillation_psd
+total_psd = total_background + oscillation_psd
+
+#plots
 
 plt.loglog(star.freq_powerspectrum_uHz, total_psd, color = 'blue', label = "power spectrum")
 plt.axvline(star.star_nu_max, ls = '--', color = 'r', label = "nu_max")
@@ -600,6 +596,12 @@ plt.ylabel("Power (ppm^2 Hz^-1)")
 plt.xlabel("Frequency (uHz)")
 plt.legend()
 plt.show()
+
+
+
+
+
+
 
 
 
