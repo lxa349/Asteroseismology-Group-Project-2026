@@ -566,7 +566,7 @@ def calc_power_amplitude(amp,width):
         
 def calc_lorentz(freq, centroid, FWHM):
     
-    x = (1/np.pi) * ((FWHM/2) / ((freq - centroid)**2 + (FWHM/2)**2))
+    x = ((FWHM/2)**2 / ((freq - centroid)**2 + (FWHM/2)**2)) #lorentz curve, !must be multipled by the amplitude!
     return x 
         
         
@@ -616,3 +616,4 @@ star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, 
 star2.multi_component()     
 """
         
+
