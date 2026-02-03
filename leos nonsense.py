@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 class power_spectrum:
     
     
-    def __init__(self,star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma,  star_name ="", sun_facule_tau = 1, sun_facule_sigma = 1, sun_supergranulation_sigma = 1.9, sun_supergranulation_tau = 129600):
+    def __init__(self,star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma,  star_name ="", sun_facule_tau = 1, sun_facule_sigma = 1, sun_supergranulation_sigma = 1.9*10**6, sun_supergranulation_tau = 129600):
         """
         
 
@@ -45,7 +45,7 @@ class power_spectrum:
         sun_supergranulation_tau : TYPE, optional
             Facule timescale of sun. The default is 129600.
         sun_supergranulation_sigma : TYPE, optional
-            Facule amplitude of sun . The default is 1.9.
+            Facule amplitude of sun . The default is 1.9 * 10**6.
 
         
         """
@@ -64,7 +64,7 @@ class power_spectrum:
         self.sun_facule_sigma = float(sun_facule_sigma)
         
         self.sun_supergranulation_tau = float(sun_supergranulation_tau) #default value is best i could find from research: https://ui.adsabs.harvard.edu/abs/2018LRSP...15....6R/abstract#:~:text=Rieutord%2C%20Michel-,Abstract,a%20selection%20of%20recent%20findings. <-- see chapter about timescales
-        self.supergranulation_sigma = float(sun_supergranulation_sigma) #same again, different source: https://www.researchgate.net/profile/P-Palle/publication/234514213_A_measurement_of_the_background_solar_velocity_spectrum/links/00b495177361416eba000000/A-measurement-of-the-background-solar-velocity-spectrum.pdf
+        self.sun_supergranulation_sigma = float(sun_supergranulation_sigma) #same again, different source: https://www.researchgate.net/profile/P-Palle/publication/234514213_A_measurement_of_the_background_solar_velocity_spectrum/links/00b495177361416eba000000/A-measurement-of-the-background-solar-velocity-spectrum.pdf
         
         self.sun_max_rms_amplitude = 2.1  
         
@@ -96,11 +96,14 @@ class power_spectrum:
         
         self.luminosity_ratio = self.calc_luminosity_ratio() #ratio of star luminosity to sun
         
-        self.star_tau_ratio = self.calc_tau_ratio() #granulation time scale 
-        self.star_granulation_tau = self.star_tau_ratio * self.sun_granulation_tau
+        self.tau_ratio = self.calc_tau_ratio() #granulation time scale 
+        #self.star_granulation_tau = self.star_tau_ratio * self.sun_granulation_tau
         
         self.sigma_ratio = self.calc_sigma_ratio()
-        self.star_granulation_sigma = self.sigma_ratio * self.sun_granulation_sigma
+        #self.star_granulation_sigma = self.sigma_ratio * self.sun_granulation_sigma
+        
+        self.star_property_list = [[self.sun_granulation_sigma, self.sun_granulation_tau],[self.sun_facule_sigma, self.sun_facule_tau],[self.sun_supergranulation_sigma, self.sun_supergranulation_tau]]
+        #lord forgive me
         
         #oscillation stuff
         self.sun_delta_nu = 135.1
@@ -183,16 +186,15 @@ class power_spectrum:
         total_background : array
             Total backgorund pSD due to all background components
 
-        """
+        """       
         
-        granulation_component = self.calc_component_psd(self.star_granulation_sigma, self.star_granulation_tau)
+        mylist = []
         
-        facule_component = self.calc_component_psd(self.sun_facule_sigma * self.sigma_ratio, self.sun_facule_tau * self.tau_ratio)
-        supergranulation_component = self.calc_component_psd(self.sun_supergranulation_sigma * self.sigma_ratio, self.sun_supergranulation_tau * self.tau_ratio)
+        for i in self.star_property_list:
+            background_component = self.calc_component_psd(i[0] * self.sigma_ratio, i[1] * self.tau_ratio)
+            mylist.append(background_component)
         
-        total_background = granulation_component + facule_component + supergranulation_component
-        
-        return total_background, granulation_component, facule_component, supergranulation_component
+        return mylist
         
     
     def calc_nu_max_ratio(self):
@@ -610,7 +612,11 @@ sun_granulation_sigma = 63
 
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
 
-total_background, granulation_component, facule_component, supergranulation_component = star.multi_component_scalable()
+muh_components = star.multi_component_scalable()
+
+total_background = muh_components[0] + muh_components[1] + muh_components[2]
+
+#total_background, granulation_component, facule_component, supergranulation_component = star.multi_component_scalable()
 oscillation_psd = star.calc_powder_density()
 total_psd = total_background + oscillation_psd
 
@@ -627,7 +633,19 @@ plt.legend()
 plt.show()
 
 
-
+plt.figure()
+#plt.loglog(star.freq_powerspectrum_uHz,total_background, label = 'Total ')
+plt.loglog(star.freq_powerspectrum_uHz, muh_components[2], label = 'Supergranulation component')
+plt.loglog(star.freq_powerspectrum_uHz, muh_components[1], label = 'Facule component')
+plt.loglog(star.freq_powerspectrum_uHz, muh_components[0], label = 'Granulation component')
+plt.axvline(star.star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
+plt.ylim(bottom=0.1)
+plt.xlim(left=10)
+plt.xlabel(r"Frequency $\nu$ ($\mu$Hz)")
+plt.ylabel(r"Granulation power, ppm^2 / µHz")
+plt.legend()
+plt.tight_layout()
+plt.show()
 
 
 
