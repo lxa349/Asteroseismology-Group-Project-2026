@@ -154,7 +154,7 @@ class power_spectrum:
        
         
         
-        self.star_facule_sigma = self.sigma_ratio * self.sun_granulation_sigma
+        self.star_facule_sigma = self.sigma_ratio * self.sun_facule_sigma
         self.star_facule_tau = self.star_tau_ratio * self.sun_facule_tau
         
         
@@ -359,6 +359,22 @@ class power_spectrum:
         return psd_per_uHz
     
     def calc_nu_nl(self, n,l):
+        """
+        
+
+        Parameters
+        ----------
+        n : TYPE
+            DESCRIPTION.
+        l : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        nu_nl : TYPE
+            DESCRIPTION.
+
+        """
         
         nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon)
         
@@ -566,7 +582,9 @@ def calc_power_amplitude(amp,width):
         
 def calc_lorentz(freq, centroid, FWHM):
     
-    x = ((FWHM/2)**2 / ((freq - centroid)**2 + (FWHM/2)**2)) #lorentz curve, !must be multipled by the amplitude!
+    
+    #x = (1/np.pi) * ((FWHM/2) / ((freq - centroid)**2 + (FWHM/2)**2))
+    x = ((FWHM/2)**2 / ((freq - centroid)**2 + (FWHM/2)**2))
     return x 
         
         
@@ -591,11 +609,67 @@ total_psd = total_background + oscillation_psd
 plt.loglog(star.freq_powerspectrum_uHz, total_psd, color = 'blue', label = "power spectrum")
 plt.axvline(star.star_nu_max, ls = '--', color = 'r', label = "nu_max")
 plt.grid(which='major')
+plt.title("Power Spectrum - Granulation and Oscillations - One component")
+plt.ylabel("Power (ppm^2 Hz^-1)")
+plt.xlabel("Frequency (uHz)")
+plt.legend()
+plt.show()
+
+plt.figure()
+plt.loglog(star.freq_powerspectrum_uHz,total_background, label = 'Total ')
+plt.loglog(star.freq_powerspectrum_uHz, granulation_component, label = 'Granulation component')
+plt.axvline(star.star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
+plt.ylim(bottom=0.1)
+plt.xlim(left=10)
+plt.xlabel(r"Frequency $\nu$ ($\mu$Hz)")
+plt.ylabel(r"Background power, ppm^2 / µHz")
+plt.title("Background power spectrum. One component model")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+plt.plot(star.freq_powerspectrum_uHz, oscillation_psd, color = "blue", label = "p-mode oscillations")
+# plt.axvline(max_freq(test_star.mass_star, test_star.r_star, test_star.teff_star) * 3100, ls='--', color='r', label = "nu_max")
+plt.axvline(star.star_nu_max, ls='--', color='r', label = "nu_max")
+plt.xlim(star.star_nu_max-600,star.star_nu_max+600)
+plt.title("Oscillations Power Spectrum")
+plt.xlabel("Frequency /microHertz")
+plt.ylabel("Power /ppm^2 Hz^-1")
+plt.legend()
+plt.show()
+
+
+#Multi component background plot 
+
+
+star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
+total_background, granulation_component, facule_component = star2.multi_component()
+oscillation_psd = star2.calc_powder_density()
+total_psd = total_background + oscillation_psd
+
+plt.loglog(star2.freq_powerspectrum_uHz, total_psd, color = 'blue', label = "power spectrum")
+plt.axvline(star2.star_nu_max, ls = '--', color = 'r', label = "nu_max")
+plt.grid(which='major')
 plt.title("Power Spectrum - Granulation and Oscillations")
 plt.ylabel("Power (ppm^2 Hz^-1)")
 plt.xlabel("Frequency (uHz)")
 plt.legend()
 plt.show()
+
+plt.figure()
+plt.loglog(star2.freq_powerspectrum_uHz,total_background, label = 'Total ')
+plt.loglog(star2.freq_powerspectrum_uHz, facule_component, label = 'Facule component')
+plt.loglog(star2.freq_powerspectrum_uHz, granulation_component, label = 'Granulation component')
+plt.axvline(star2.star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
+plt.ylim(bottom=0.1)
+plt.xlim(left=10)
+plt.xlabel(r"Frequency $\nu$ ($\mu$Hz)")
+plt.ylabel(r"Granulation power, ppm^2 / µHz")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+
 
 
 
@@ -616,4 +690,3 @@ star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, 
 star2.multi_component()     
 """
         
-
