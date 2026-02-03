@@ -389,23 +389,34 @@ class power_spectrum:
     
     def calc_nu_nl(self, n,l):
         """
-        Calculates the frequency of  a given n and l value
+        
 
         Parameters
         ----------
-        n : interger
-            radial mode.
-        l : interger
-            angular degree.
+        n : int
+            radial mode
+        l : int
+            angular degree
 
         Returns
         -------
         nu_nl : float
-            frequency of the n l mode.
+            frequency of the p-mode oscillations
 
         """
         
-        nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon)
+        #I have no actual idea how D relates to the splitting of the frequencies.
+        #I have chucked in the relationship between delta nu_02 and delta nu.
+        #In the asymptotic limit, dnu03 = 5/3 dnu02, which i have reflected here (Chaplin and Miglio 2013).
+        #I'm gonna die
+        
+        if l % 2 == 0:
+        
+            nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) - (0.00208 * self.star_delta_nu + 2.12756) * l * (l+1)
+            
+        elif l % 2 == 1:
+            
+            nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) - ((0.00208 * 5 / 3) * self.star_delta_nu + (2.12756 * 5 / 3)) * l * (l+1)
         
         return nu_nl
     
@@ -770,4 +781,5 @@ star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, 
 star2.multi_component()     
 """
         
+
 
