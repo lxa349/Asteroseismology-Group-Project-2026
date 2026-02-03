@@ -167,6 +167,10 @@ class power_spectrum:
         self.star_facule_sigma = self.sigma_ratio * self.sun_facule_sigma
         self.star_facule_tau = self.tau_ratio * self.sun_facule_tau
         
+        print(f"star {self.star_name}")
+        print(f"Fraculation time scale { self.star_facule_tau}, fracutiln sigma {self.star_facule_sigma}")
+        print(f"Granulation time scale {self.star_granulation_tau}, granulation sigma {self.star_granulation_sigma}")
+        
         
         granulation_component = self.calc_component_psd( self.star_granulation_sigma, self.star_granulation_tau)
         
@@ -670,7 +674,7 @@ class power_spectrum:
         plt.show()
         
         
-def plot_multi_component_psd(freq_powerspectrum_uHz, total_background, facule_component, granulation_component, star_nu_max, star_name):
+def plot_multi_component_psd(freq_powerspectrum_uHz, total_background, facule_component, granulation_component, star_nu_max, star_name, ylim):
     """
     Plots power specturm of multi component model 
 
@@ -687,9 +691,9 @@ def plot_multi_component_psd(freq_powerspectrum_uHz, total_background, facule_co
     plt.loglog(freq_powerspectrum_uHz, facule_component, label = 'Facule component')
     plt.loglog(freq_powerspectrum_uHz, granulation_component, label = 'Granulation component')
     plt.axvline(star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
-    plt.title(f"Background spectrum due to granulation and facuel for star {star_name}")
+    plt.title(f"Background spectrum due to granulation and facuel for star {star_name}, ylim = {ylim}")
     
-    plt.ylim(bottom=1)
+    plt.ylim(bottom=0.1)
     plt.xlim(left=10)
     
     plt.xlabel(r"Frequency $\nu$ ($\mu$Hz)")
@@ -730,23 +734,27 @@ star_name = "KIC 6603624"
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau , sun_facule_sigma)
 total_background, granulation_component, facule_component = star.multi_component()
 
-plot_multi_component_psd(star.freq_powerspectrum_uHz, total_background, facule_component, granulation_component, star.star_nu_max, star_name)
+plot_multi_component_psd(star.freq_powerspectrum_uHz, total_background, facule_component, granulation_component, star.star_nu_max, star_name, ylim = 0.1)
 
 
-"""
+
 #KIC  6933899
 star_mass,  star_radius, star_teff   = 1.10, 1.58, 5616
 star_name = "KIC  6933899"
-star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
-star.run_granulation()
+star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau , sun_facule_sigma)
+total_background, granulation_component, facule_component = star.multi_component()
+
+plot_multi_component_psd(star.freq_powerspectrum_uHz, total_background, facule_component, granulation_component, star.star_nu_max, star_name, ylim = 1)
 
 
 #KIC 11244118
 star_mass,  star_radius, star_teff   = 1.01, 1.55, 5507
 star_name = "KIC 11244118"
-star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
-star.run_granulation()
-"""
+star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau , sun_facule_sigma)
+total_background, granulation_component, facule_component = star.multi_component()
+
+plot_multi_component_psd(star.freq_powerspectrum_uHz, total_background, facule_component, granulation_component, star.star_nu_max, star_name, ylim = 1)
+
 
 
 
