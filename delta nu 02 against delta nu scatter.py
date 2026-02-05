@@ -85,7 +85,7 @@ def star_plotting(nu_max_list, nu_02_list, temp_list, popt, pcov, std = 0):
         plt.fill_between(nu_max_list, lin_func(nu_max_list, *popt) + 2*std, lin_func(nu_max_list, *popt) - 2*std, alpha = 0.05, color = "green", label = "2std")
     
     plt.scatter(nu_max_list, nu_02_list, s = 5, label = "Stars", c = temp_list, cmap = 'hot')
-    plt.colorbar(label = "Effective temperature")
+    plt.colorbar(label = "Effective temperature /K")
     
     plt.plot(nu_max_list, lin_func(nu_max_list, *popt), 'b-',
              label='linear fit: m=%5.5f, c=%5.5f' % tuple(popt))
