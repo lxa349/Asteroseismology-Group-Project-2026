@@ -120,15 +120,26 @@ class power_spectrum:
         self.W_dip = self.calc_width_parameter(4637, -141)
         self.nu_dip = self.calc_width_parameter(2984, 60)
         
-    def theoretical_sigma_tau(self):
+    def theoretical_sigma_tau(self, scalble = False):
         
-        self.star_granulation_tau = self.star_tau_ratio * self.sun_granulation_tau
-        self.star_granulation_sigma = self.sigma_ratio * self.sun_granulation_sigma
+        if scalble == False:
+            
+            self.star_granulation_tau = self.star_tau_ratio * self.sun_granulation_tau
+            self.star_granulation_sigma = self.sigma_ratio * self.sun_granulation_sigma
+            
+            self.star_facule_sigma = self.sigma_ratio * self.sun_facule_sigma
+            self.star_facule_tau = self.star_tau_ratio * self.sun_facule_tau
+            
+            granulation_component, facule_component = self.multi_component()
+        else:
+            
+            self.star_property_list = [[self.sun_granulation_sigma, self.sun_granulation_tau],[self.sun_facule_sigma, self.sun_facule_tau],[self.sun_supergranulation_sigma, self.sun_supergranulation_tau]]
+
+        return granulation_component, facule_component
+            
+            
         
-        self.star_facule_sigma = self.sigma_ratio * self.sun_facule_sigma
-        self.star_facule_tau = self.star_tau_ratio * self.sun_facule_tau
         
-        self.star_property_list = [[self.sun_granulation_sigma, self.sun_granulation_tau],[self.sun_facule_sigma, self.sun_facule_tau],[self.sun_supergranulation_sigma, self.sun_supergranulation_tau]]
         
     def defined_sigma_tau(self, star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau, karoff_model = False):
         
@@ -146,6 +157,8 @@ class power_spectrum:
         else: 
             
             granulation_component, facule_component = self.multi_component()
+        
+            
         
         return granulation_component, facule_component
         
@@ -756,7 +769,30 @@ def calc_lorentz(freq, centroid, FWHM):
     x = ((FWHM/2)**2 / ((freq - centroid)**2 + (FWHM/2)**2)) #lorentz curve, !must be multipled by the amplitude!
     return x 
         
+
+
+#All values taken from  Karoff 2013
+#KIC 6603624
+star_mass,  star_radius, star_teff   =  1.01, 1.15, 5416
+star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical = 62.8, 280.8, 76.5, 66.
+star_name = "KIC 6603624"
+
+
+
+
+"""
+sun_granulation_tau = 214.3
+sun_granulation_sigma = 62.4
+
+sun_facule_tau = 65.8
+sun_facule_sigma = 50.1
+
+star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma,  star_name , sun_facule_tau , sun_facule_sigma )
+star2.multi_component()     
+"""
         
+
+"""      
 star_mass, star_radius, star_teff = 1.223, 1.357, 6325
 star_name = "Kepler 410"
 sun_nu_max = 3090
@@ -803,22 +839,7 @@ plt.ylabel(r"Granulation power, ppm^2 / µHz")
 plt.legend()
 plt.tight_layout()
 plt.show()
-
-
-
-
-
-
 """
-sun_granulation_tau = 214.3
-sun_granulation_sigma = 62.4
 
-sun_facule_tau = 65.8
-sun_facule_sigma = 50.1
-
-star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma,  star_name , sun_facule_tau , sun_facule_sigma )
-star2.multi_component()     
-"""
-        
 
 
