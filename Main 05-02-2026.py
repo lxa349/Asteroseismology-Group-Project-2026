@@ -120,9 +120,32 @@ class power_spectrum:
         self.W_dip = self.calc_width_parameter(4637, -141)
         self.nu_dip = self.calc_width_parameter(2984, 60)
         
-    def theoretical_sigma_tau(self, karoff_model = False):
+    def theoretical_sigma_tau(self, model = "karoff"):
+        """
+        Compares the different models of granulation for a sigma, tau etc caluclated using theoreitcal scaling relationships
+
+        Parameters
+        ----------
+        model : string, optional
+            Decides on which model is used. The default is "karoff".
+            "karoff" refers to model described in C. Karoff 2013, the first two terms of equation 2
+            "ball" refers to the model described in Warrick H. Ball 2018, equation 23 
+
+        Returns
+        -------
+        granulation_component : array
+            The component of the background spectrum due to granulation.
+        facule_component : array
+            The component of the backgroudn spectrum due to facule.
+
+        """
         
-        if karoff_model == True:
+        
+        
+        
+       
+        
+        if model == "karoff":
             
             star_granulation_tau = self.tau_ratio * self.sun_granulation_tau
             star_granulation_sigma = self.sigma_ratio * self.sun_granulation_sigma
@@ -130,12 +153,35 @@ class power_spectrum:
             star_facule_sigma = self.sigma_ratio * self.sun_facule_sigma
             star_facule_tau = self.tau_ratio * self.sun_facule_tau
             
+            
+            
             print("Theory calculated values")
             print(f"star granulation sigma {star_granulation_sigma}, star granulation tau {star_granulation_tau}")        
             print(f"star facule sigma {star_facule_sigma}, star facule tau {star_facule_tau}") 
             
             granulation_component, facule_component = self.calc_karoff_granulation_facule_model(star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau)
         
+        elif model == 'ball':
+            
+            star_granulation_tau = self.tau_ratio * self.sun_granulation_tau
+            star_granulation_sigma = self.sigma_ratio * self.sun_granulation_sigma
+            
+            
+            granulation_component =  self.calc_granulation_psd_ball(star_granulation_sigma, star_granulation_tau)
+        
+        elif model == "kallinger":
+            
+            #Note with the model, each component isn't specified as being due to facule or granulation. Just keepign with variable naming schemes 
+            
+            star_granulation_sigma = 5
+            star_granulation_tau = 5
+            
+            star_facule_sigma = 5 
+            star_facule_tau = 5
+            
+            granulation_component, facule_component = self.calc_kallinger_model(star_granulation_sigma , star_granulation_tau, star_facule_sigma, star_facule_tau)
+            
+            
         else:
             
             granulation_component, facule_component = self.multi_component(star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau)
@@ -146,11 +192,41 @@ class power_spectrum:
         
         
         
-    def defined_sigma_tau(self, star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau, karoff_model = False):
+    def defined_sigma_tau(self, star_granulation_sigma, star_granulation_tau, star_facule_sigma = 1, star_facule_tau = 1, model = "karoff"):
+        """
+        Compares the different models of granulation for a sigma, tau etc  using given values. Ie from a paper / test values
+        
+        Note that not all models acount for facule.
+
+        Parameters
+        ----------
+        star_granulation_sigma : float
+            sigma of granulation of the star.
+        star_granulation_tau : float
+            tau tiem scale of granulation of the star.
+        star_facule_sigma : float, optional
+            sigma of facule of the star. The default is 1.
+        star_facule_tau : float, optional
+            DESCRIPTION. The default is 1.
+        model : string, optional
+            Decides on which model is used. The default is "karoff".
+            "karoff" refers to model described in C. Karoff 2013, the first two terms of equation 2
+            "ball" refers to the model described in Warrick H. Ball 2018, equation 23 
+
+
+        Returns
+        -------
+        granulation_component : array
+            The component of the background spectrum due to granulation.
+        facule_component : array
+            The component of the backgroudn spectrum due to facule.
+
+
+        """
         
         
         
-        if karoff_model == True:
+        if model == "karoff":
             
             print("Practical defiend values ")
             print(f"star granulation sigma {star_granulation_sigma}, star granulation tau {star_granulation_tau}")        
@@ -158,7 +234,12 @@ class power_spectrum:
             
             granulation_component, facule_component = self.calc_karoff_granulation_facule_model(star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau)
             
-        else: 
+        
+        elif model == "ball":
+            
+            granulation_component, facule_component = self.calc_granulation_psd_ball(star_granulation_sigma, star_granulation_tau)
+        
+        else:
             
             granulation_component, facule_component = self.multi_component(star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau)
         
@@ -166,7 +247,67 @@ class power_spectrum:
         
         return granulation_component, facule_component
         
+    def calc_kallinger_model(self, a_1, b_1, a_2, b_2):
+        """
+        Kallinger 2014 model of background granulation / other stuff. Equation 2 model f. Two loretnz functions with a fixed power of 4, with two seperate sigmas, taus etc
+        
+            
+        P(v) = xi * (a_1^2 / b_1 ) / (1 + (v b_1))^4 + xi * (a_2^2 / b_2 ) / (1 + (v* b_2))^4 
+        
+        granulation_component refers to the first term above. Facule is the 2nd term. 
+        
+        ai = rms amplitude (sigma) of ith component
+        bi = (1 / 2 pi tau), tau = characteristic timescale 
+            
+            
+            
+            
+
+
+        Returns
+        -------
+        granulation_component : array
+            The component of the background spectrum due to granulation.
+        facule_component : array
+            The component of the backgroudn spectrum due to facule.
+
+        """
+        
+        freq_uHz = np.asarray(self.freq_powerspectrum_uHz)
+        freq_Hz = freq_uHz * 1e-6
+        
+        xi = 2 * np.sqrt(2) / np.pi#normalisation factor, defined in paper 
+        
+        granulation_component = (xi * ((a_1**2)/b_1))/ (1 + (freq_Hz * (1/ b_1))**4)
+        facule_component = (xi * ((a_2**2)/b_2))/ (1 + (freq_Hz * (1/ b_2))**4)
+        
+        return granulation_component, facule_component
+        
+        
+    
     def calc_karoff_granulation_facule_model(self,  star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau):
+        """
+        Granulation and facule model according to Karoff 2013
+
+        Parameters
+        ----------
+        star_granulation_sigma : TYPE
+            DESCRIPTION.
+        star_granulation_tau : TYPE
+            DESCRIPTION.
+        star_facule_sigma : TYPE
+            DESCRIPTION.
+        star_facule_tau : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        granulation_component : TYPE
+            DESCRIPTION.
+        facule_component : TYPE
+            DESCRIPTION.
+
+        """
 
          
 
@@ -209,7 +350,7 @@ class power_spectrum:
         
     def multi_component(self, star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau):
         """
-        Models the background as two components. One from granulation, one from facule
+        Models the background due to granulation and facule as two components that take an identical form. One from granulation, one from facule
 
         Returns
         -------
@@ -233,7 +374,8 @@ class power_spectrum:
     
     def multi_component_scalable(self):
         """
-        multi_component but via for loop
+        Not used atm 
+        multi_component but via for loop. 
         
 
         Returns
@@ -368,10 +510,10 @@ class power_spectrum:
         
     
     
-    def calc_granulation_psd_per_uHz(self):
+    def calc_granulation_psd_ball(self, star_granulation_sigma, star_granulation_tau):
         """
-        Old function, calculates only the granulation compoment 
         
+        Ball  2018 model fo granulation         
         Calculates power spectrum value at an array of given frequencies using  equation 23 from Ball et al
             P(ν) = 4*sigma^2*tau / (1 + (2πνtau)^2)
             
@@ -399,7 +541,7 @@ class power_spectrum:
 
         demominator_power  = 4
         
-        psd_per_Hz = (4.0 * (self.sigma_gran ** 2) * self.tau_gran_s) / (1.0 + (2.0 * np.pi * freq_Hz * self.tau_gran_s) ** demominator_power)
+        psd_per_Hz = (4.0 * (star_granulation_sigma ** 2) * star_granulation_tau) / (1.0 + (2.0 * np.pi * freq_Hz * star_granulation_tau) ** demominator_power)
         psd_per_uHz = psd_per_Hz * 1e-6 #converts to uHz 
         return psd_per_uHz
     
@@ -706,7 +848,7 @@ def calc_lorentz(freq, centroid, FWHM):
 
 def plot_multi_component_psd(freq_powerspectrum_uHz,  granulation_component, facule_component,  star_nu_max, star_name,  practical_granulation,practical_facule, ylim):
     """
-    Plots power specturm of multi component model 
+    Plots power specturm of multi component model. Used to compared theoretical sigma models and measured models.  
 
     Returns
     -------
@@ -739,8 +881,67 @@ def plot_multi_component_psd(freq_powerspectrum_uHz,  granulation_component, fac
     plt.ylabel(r"Granulation power, ppm^2 / µHz")
     
     
+    
     plt.legend()
     plt.show()
+    
+def plot_one_component_psd(freq_powerspectrum_uHz,  granulation_component, star_nu_max, star_name):
+    """
+    Plots models that only have one component
+
+    Parameters
+    ----------
+    freq_powerspectrum_uHz : TYPE
+        DESCRIPTION.
+    granulation_component : TYPE
+        DESCRIPTION.
+    star_nu_max : TYPE
+        DESCRIPTION.
+    star_name : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    plt.semilogy(freq_powerspectrum_uHz, granulation_component, label='Granulation background component ')
+    
+def plot_two_component_psd(freq_powerspectrum_uHz,  granulation_component, facule_component,  star_nu_max, star_name):
+    """
+    Plot models 
+
+    Parameters
+    ----------
+    freq_powerspectrum_uHz : TYPE
+        DESCRIPTION.
+    granulation_component : TYPE
+        DESCRIPTION.
+    facule_component : TYPE
+        DESCRIPTION.
+    star_nu_max : TYPE
+        DESCRIPTION.
+    star_name : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    total_background = facule_component + granulation_component
+
+    
+    plt.figure()
+    
+    
+    
+    plt.semilogy(freq_powerspectrum_uHz, total_background, label='Total theory')
+    plt.semilogy(freq_powerspectrum_uHz, facule_component, label='Facule theory')
+    plt.semilogy(freq_powerspectrum_uHz, granulation_component, label='Granulation theory')
+    
         
 
 
@@ -760,15 +961,18 @@ star_mass,  star_radius, star_teff   =  1.01, 1.15, 5416
 star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical = 62.8, 280.8, 76.5, 66.
 star_name = "KIC 6603624"
 
+
+#compaes karoff model with theoreitcal scaling realtionship sigma values to sigma values from karoff 2013 paper 
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau , sun_facule_sigma)
-granulation_component_practical, facule_component_practical = star.defined_sigma_tau(star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical, karoff_model=True)
-granulation_component_theory, facule_component_theory = star.theoretical_sigma_tau(scalble=False)
+granulation_component_practical, facule_component_practical = star.defined_sigma_tau(star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical, model="karoff")
+granulation_component_theory, facule_component_theory = star.theoretical_sigma_tau(model="karoff")
 
 
 ylim = 1
 plot_multi_component_psd(star.freq_powerspectrum_uHz, granulation_component_theory, facule_component_theory, star.star_nu_max, star_name, granulation_component_practical, facule_component_practical, ylim)
 
-
+star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau, sun_granulation_sigma)
+granulation_component = star2.theoretical_sigma_tau(model = 'ball')
 
 """
 sun_granulation_tau = 214.3
