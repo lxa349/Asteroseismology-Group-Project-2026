@@ -102,6 +102,11 @@ class power_spectrum:
         self.sigma_ratio = self.calc_sigma_ratio()
         self.star_granulation_sigma = self.sigma_ratio * self.sun_granulation_sigma
         
+        self.star_facule_sigma = self.sigma_ratio * self.sun_facule_sigma
+        self.star_facule_tau = self.tau_ratio * self.sun_facule_tau
+        
+        
+        
         #self.star_property_list = [[self.sun_granulation_sigma, self.sun_granulation_tau],[self.sun_facule_sigma, self.sun_facule_tau],[self.sun_supergranulation_sigma, self.sun_supergranulation_tau]]
         #lord forgive me
         
@@ -162,10 +167,10 @@ class power_spectrum:
 
         """
        
-        
-        
         self.star_facule_sigma = self.sigma_ratio * self.sun_facule_sigma
         self.star_facule_tau = self.tau_ratio * self.sun_facule_tau
+        
+
         
         print(f"star {self.star_name}")
         print(f"Fraculation time scale { self.star_facule_tau}, fracutiln sigma {self.star_facule_sigma}")
@@ -393,6 +398,27 @@ class power_spectrum:
         psd_per_uHz = psd_per_Hz * 1e-6
         
         return psd_per_uHz
+    
+    def calc_karoff_granulation_facule_model(self,  star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau):
+
+        print(f"star granulation sigma {star_granulation_sigma}, star granulation tau {star_granulation_tau}")        
+        print(f"star facule sigma {star_facule_sigma}, star facule tau {star_facule_tau}")        
+
+        
+        freq_uHz = np.asarray(self.freq_powerspectrum_uHz)
+        freq_Hz = freq_uHz * 1e-6
+        
+        granulation_component = (3.47 * (star_granulation_sigma**2)*star_granulation_tau)/(1+(2*np.pi*freq_Hz * star_granulation_tau)**3.5)
+        facule_component = (6.20 * (star_facule_sigma**2)*star_facule_tau)/(1+(2*np.pi*freq_Hz * star_facule_tau)**6.2)
+        
+        granulation_component = granulation_component * 1e-6
+        facule_component = facule_component * 1e-6
+        
+        return granulation_component, facule_component
+    
+         
+        
+        
     
     def calc_nu_nl(self, n,l):
         """
@@ -634,47 +660,10 @@ class power_spectrum:
         
     
         
-    def plot_granulation_psd(self):
-        """
-        Plot granulation powers spectrum P(nu) at range of frequencies and outputs data
 
-        Parameters
-        ----------
-        freq_uHz : array
-            Frequency array in microHz.
-        psd_per_uHz : array
-            Granulation powerspectrum in 
-        nu_max_star_uHz : float
-            nu_max of the star in microHz.
-        tau_gran_s : float
-            Granulation timescale in seconds.
-        mass_star : float
-            Stellar mass in solar masses.
-        r_star : float
-            Stellar radius in solar radii.
-        teff_star : float
-            Effective temperature in Kelvin.
-
-
-        """
-        plt.figure()
-        plt.loglog(self.freq_powerspectrum_uHz, self.granulation_component)
-        plt.axvline(self.star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
-        
-        plt.ylim(bottom=0.1)
-        plt.xlim(left=10) 
         
         
-        plt.xlabel(r"Frequency $\nu$ ($\mu$Hz)")
-        plt.ylabel(r"Granulation power, ppm^2 / µHz")
-        
-        
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-        
-        
-def plot_multi_component_psd(freq_powerspectrum_uHz, total_background, facule_component, granulation_component, star_nu_max, star_name, ylim):
+def plot_multi_component_psd(freq_powerspectrum_uHz,  granulation_component, facule_component,  star_nu_max, star_name,  practical_granulation,practical_facule, ylim):
     """
     Plots power specturm of multi component model 
 
@@ -684,24 +673,32 @@ def plot_multi_component_psd(freq_powerspectrum_uHz, total_background, facule_co
 
     """
     
+    total_background_practical = practical_facule + practical_granulation
+    total_background = facule_component + granulation_component
+    
     
     plt.figure()
     
-    plt.loglog(freq_powerspectrum_uHz, total_background, label = 'Total ')
-    plt.loglog(freq_powerspectrum_uHz, facule_component, label = 'Facule component')
-    plt.loglog(freq_powerspectrum_uHz, granulation_component, label = 'Granulation component')
+    plt.semilogy(freq_powerspectrum_uHz, total_background, label='Total theory')
+    plt.semilogy(freq_powerspectrum_uHz, facule_component, label='Facule theory')
+    plt.semilogy(freq_powerspectrum_uHz, granulation_component, label='Granulation theory')
+
+    plt.semilogy(freq_powerspectrum_uHz, practical_granulation, label='Gran practical')
+    plt.semilogy(freq_powerspectrum_uHz, practical_facule, label='Facule practicl')
+    plt.semilogy(freq_powerspectrum_uHz, total_background_practical, label='Total practical')
+
+    
     plt.axvline(star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
     plt.title(f"Background spectrum due to granulation and facuel for star {star_name}, ylim = {ylim}")
     
     plt.ylim(bottom=0.1)
-    plt.xlim(left=10)
+    plt.xlim(left=10, right = 2700)
     
     plt.xlabel(r"Frequency $\nu$ ($\mu$Hz)")
     plt.ylabel(r"Granulation power, ppm^2 / µHz")
     
     
     plt.legend()
-    plt.tight_layout()
     plt.show()
         
 
@@ -721,23 +718,36 @@ star_name = "Kepler 410"
 sun_nu_max = 3090
 sun_teff = 5772.0
 sun_granulation_tau = 214
-sun_granulation_sigma = 63
+sun_granulation_sigma = 62.4
 
 sun_facule_tau = 65.8
 sun_facule_sigma = 50.1
 
 #All values taken from  Karoff 2013
 #KIC 6603624
-sun_sigma = 62.4
 star_mass,  star_radius, star_teff   =  1.01, 1.15, 5416
+star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical = 62.8, 280.8, 76.5, 66.1
 star_name = "KIC 6603624"
+
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau , sun_facule_sigma)
+
 total_background, granulation_component, facule_component = star.multi_component()
 
-plot_multi_component_psd(star.freq_powerspectrum_uHz, total_background, facule_component, granulation_component, star.star_nu_max, star_name, ylim = 0.1)
+practical_granulation = star.calc_component_psd(star_granultion_sigma_practical, star_granulation_tau_practical )
+practical_facule = star.calc_component_psd(star_facule_sigma_practical, star_facule_tau_practical)
+
+plot_multi_component_psd(star.freq_powerspectrum_uHz,  granulation_component, facule_component, star.star_nu_max, star_name, practical_granulation,practical_facule, ylim = 1)
+
+karoff_practical_granulation, karoff_practical_facule = star.calc_karoff_granulation_facule_model(star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical)
+karoff_theory_granulation, karoff_theory_facule = star.calc_karoff_granulation_facule_model(star.star_granulation_sigma, star.star_granulation_tau, star.star_facule_sigma, star.star_facule_tau)
 
 
 
+plot_multi_component_psd(star.freq_powerspectrum_uHz, karoff_theory_granulation, karoff_theory_facule, star.star_nu_max, star_name, karoff_practical_granulation, karoff_theory_granulation, ylim =1 )
+
+
+
+"""
 #KIC  6933899
 star_mass,  star_radius, star_teff   = 1.10, 1.58, 5616
 star_name = "KIC  6933899"
@@ -754,7 +764,7 @@ star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, s
 total_background, granulation_component, facule_component = star.multi_component()
 
 plot_multi_component_psd(star.freq_powerspectrum_uHz, total_background, facule_component, granulation_component, star.star_nu_max, star_name, ylim = 1)
-
+"""
 
 
 
