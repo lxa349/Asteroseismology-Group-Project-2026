@@ -679,16 +679,16 @@ class power_spectrum:
         # Keen et al 2014 gives the second term (the frequency splitting term) to be simply the small frequency separation, hence what i have attempted here,
         # though they add it instead of subtracting it, i tested this and it made everything worse, though that may be due to the random element in fit
         
-        fit = (0.05200 * self.star_delta_nu) + np.random.normal(1.42683, 1.41997)
-        # fit = (0.05200 * self.star_delta_nu) + 1.42683
+        #fit = (0.05200 * self.star_delta_nu) + np.random.normal(1.42683, 1.41997)
+        fit = (0.05200 * self.star_delta_nu) + 1.42683
         # fit = 3
         
         if l % 2 == 0:
         
-             nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) - fit * l * (l+1)
+             nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) + fit * l * (l+1)
             
         elif l % 2 == 1:
-            nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) - fit * (5/3) * l * (l+1)
+            nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) + fit * (5/3) * l * (l+1)
             # nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) - fit * l * (l+1)
         
         return nu_nl
@@ -712,6 +712,8 @@ class power_spectrum:
         """
         
         nu_nl = self.calc_nu_nl(n,l)
+        print(self.star_nu_max)
+        print(nu_nl)
         
         line_width = ((self.alpha * np.log(nu_nl / self.star_nu_max)) + np.log(self.width_alpha)) + (np.log(self.delta_width_dip)/(1 + (((2 * np.log(nu_nl/self.nu_dip))/(np.log(self.W_dip/self.star_nu_max)))**2)))
         
@@ -759,9 +761,9 @@ class power_spectrum:
 
         """
         
+        power = -0.093
         
-        
-        t_red_star = 8900
+        t_red_star = 8907 * self.luminosity_ratio ** power
 
         
         delta_t = 1250
@@ -786,7 +788,6 @@ class power_spectrum:
 
         """
         
-        power = -0.093
         
         dwarf_suppression_beta = self.calc_dwarf_suppression_beta_term()
 
@@ -926,7 +927,7 @@ def plot_multi_component_psd(freq_powerspectrum_uHz,  granulation_component, fac
     plt.legend()
     plt.show()
     
-def plot_one_component_psd(freq_powerspectrum_uHz,  granulation_component, star_nu_max, star_name):
+def plot_one_component_psd(freq_powerspectrum_uHz,  granulation_component, oscillation_component, star_nu_max, star_name, model):
     """
     Plots models that only have one component
 
@@ -947,7 +948,19 @@ def plot_one_component_psd(freq_powerspectrum_uHz,  granulation_component, star_
 
     """
     
-    plt.semilogy(freq_powerspectrum_uHz, granulation_component, label='Granulation background component ')
+    total_component = granulation_component + oscillation_component 
+    
+    
+    
+    plt.loglog(freq_powerspectrum_uHz, granulation_component, label='Granulation background component ')
+    plt.loglog(freq_powerspectrum_uHz, total_component, label='Total' )
+    plt.title(f"{model} of a one component background of star {star_name}")
+    plt.xlim(10, 10000)
+    plt.ylim(0.1)
+    plt.legend()
+    plt.show()
+
+
     
 def plot_two_component_psd(freq_powerspectrum_uHz,  granulation_component, facule_component, oscillation_component, star_nu_max, star_name, model):
     """
@@ -981,15 +994,21 @@ def plot_two_component_psd(freq_powerspectrum_uHz,  granulation_component, facul
     plt.loglog(freq_powerspectrum_uHz, total_background, label='Total theory')
     plt.loglog(freq_powerspectrum_uHz, facule_component, label='Facule theory')
     plt.loglog(freq_powerspectrum_uHz, granulation_component, label='Granulation theory')
-    plt.loglog(freq_powerspectrum_uHz, oscillation_component, label = 'Oscillations')
     plt.title(f"{model}  of a two component background of star {star_name}")
     plt.axvline(star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
-    plt.xlim(right=1000)
-    plt.ylim(0.1)
+    plt.ylim(0.01)
 
     
     plt.legend()
 
+    plt.show()
+    
+def plot_oscillation(freq_powerspectrum_uHz,  oscillation_component, star_nu_max, star_name):
+    
+    plt.loglog(freq_powerspectrum_uHz, oscillation_component, label = 'OScillations')
+    plt.title(f"Oscillations of star {star_name}")
+    plt.axvline(star_nu_max, label = 'Nu Max')
+    plt.legend()
     plt.show()
     
     
@@ -1001,6 +1020,52 @@ sun_teff = 5772.0
 #All values taken from  Karoff 2013. Comparison of karoff model with observed values and scaling vaalues
 sun_granulation_tau, sun_granulation_sigma, sun_facule_tau, sun_facule_sigma = 214, 62.4, 65.8, 50.1
 
+
+
+"""
+Values taken from kepler input catalogue 
+Kallinger model testing graphs.
+doesn't require mass, hence = 1'
+
+star_mass,  star_radius, star_teff   =  1, 11.4, 4730
+star_name = "KIC 7949599"
+
+star_mass,  star_radius, star_teff   =  1, 13.6, 4577
+star_name = "KIC 5091962"
+
+star_mass,  star_radius, star_teff   =  1.01, 1.15, 5416
+star_name = "KIC 6603624"
+
+star_mass,  star_radius, star_teff = 1.21, 1.357, 6163 
+star_name = "Kepler 410 A"
+
+star_mass,  star_radius, star_teff 
+
+
+"""
+
+
+star_mass,  star_radius, star_teff = 1.223, 1.357, 6325 
+star_name = "Kepler 410 A"
+
+star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
+granulation_component, facule_component = star.theoretical_sigma_tau(model = "ball")
+oscillation_component = star.calc_powder_density()
+
+plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
+plot_one_component_psd(star.freq_powerspectrum_uHz, granulation_component, oscillation_component, star.star_nu_max, star_name, model = "ball")
+
+
+
+star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
+granulation_component, facule_component = star.theoretical_sigma_tau(model = "kallinger")
+oscillation_component = star.calc_powder_density()
+plot_two_component_psd(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name,  model = "kallinger")
+plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
+
+
+
+
 """
 star_mass,  star_radius, star_teff   =  1.01, 1.15, 5416
 star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical = 62.8, 280.8, 76.5, 66.
@@ -1010,26 +1075,6 @@ star_name = "KIC 6603624"
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau , sun_facule_sigma)
 granulation_component_practical, facule_component_practical = star.defined_sigma_tau(star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical, model="karoff")
 granulation_component_theory, facule_component_theory = star.theoretical_sigma_tau(model="karoff")
-"""
-
-"""
-Values taken from kepler input catalogue 
-Kallinger model testing graphs.
-doesn't require mass, hence = 1'
-
-star_mass,  star_radius, star_teff   =  1, 11.4, 4730
-star_name = "KIC 7949599"
-"""
-
-star_mass,  star_radius, star_teff   =  1, 13.6, 4577
-star_name = "KIC 5091962"
-
-
-star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
-granulation_component, facule_component = star.theoretical_sigma_tau(model = "kallinger")
-oscillation_component = star.calc_powder_density()
-plot_two_component_psd(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name,  model = "kallinger")
-
 star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
 granulation_component, facule_component = star2.theoretical_sigma_tau(model = "karoff")
 oscillation_component = star2.calc_powder_density()
@@ -1037,7 +1082,6 @@ plot_two_component_psd(star2.freq_powerspectrum_uHz, granulation_component, facu
 
 
 
-"""
 ylim = 1
 #plot_multi_component_psd(star.freq_powerspectrum_uHz, granulation_component_theory, facule_component_theory, star.star_nu_max, star_name, granulation_component_practical, facule_component_practical, ylim)
 
