@@ -949,7 +949,7 @@ def plot_one_component_psd(freq_powerspectrum_uHz,  granulation_component, star_
     
     plt.semilogy(freq_powerspectrum_uHz, granulation_component, label='Granulation background component ')
     
-def plot_two_component_psd(freq_powerspectrum_uHz,  granulation_component, facule_component,  star_nu_max, star_name, model):
+def plot_two_component_psd(freq_powerspectrum_uHz,  granulation_component, facule_component, oscillation_component, star_nu_max, star_name, model):
     """
     Plot models 
 
@@ -972,7 +972,7 @@ def plot_two_component_psd(freq_powerspectrum_uHz,  granulation_component, facul
 
     """
     
-    total_background = facule_component + granulation_component
+    total_background = facule_component + granulation_component + oscillation_component
 
     
     plt.figure()
@@ -981,6 +981,7 @@ def plot_two_component_psd(freq_powerspectrum_uHz,  granulation_component, facul
     plt.loglog(freq_powerspectrum_uHz, total_background, label='Total theory')
     plt.loglog(freq_powerspectrum_uHz, facule_component, label='Facule theory')
     plt.loglog(freq_powerspectrum_uHz, granulation_component, label='Granulation theory')
+    plt.loglog(freq_powerspectrum_uHz, oscillation_component, label = 'Oscillations')
     plt.title(f"{model}  of a two component background of star {star_name}")
     plt.axvline(star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
     plt.xlim(right=1000)
@@ -1000,7 +1001,7 @@ sun_teff = 5772.0
 #All values taken from  Karoff 2013. Comparison of karoff model with observed values and scaling vaalues
 sun_granulation_tau, sun_granulation_sigma, sun_facule_tau, sun_facule_sigma = 214, 62.4, 65.8, 50.1
 
-
+"""
 star_mass,  star_radius, star_teff   =  1.01, 1.15, 5416
 star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical = 62.8, 280.8, 76.5, 66.
 star_name = "KIC 6603624"
@@ -1009,13 +1010,16 @@ star_name = "KIC 6603624"
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau , sun_facule_sigma)
 granulation_component_practical, facule_component_practical = star.defined_sigma_tau(star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical, model="karoff")
 granulation_component_theory, facule_component_theory = star.theoretical_sigma_tau(model="karoff")
+"""
 
 """
 Values taken from kepler input catalogue 
 Kallinger model testing graphs.
 doesn't require mass, hence = 1'
+
 star_mass,  star_radius, star_teff   =  1, 11.4, 4730
 star_name = "KIC 7949599"
+"""
 
 star_mass,  star_radius, star_teff   =  1, 13.6, 4577
 star_name = "KIC 5091962"
@@ -1023,8 +1027,15 @@ star_name = "KIC 5091962"
 
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
 granulation_component, facule_component = star.theoretical_sigma_tau(model = "kallinger")
-plot_two_component_psd(star.freq_powerspectrum_uHz, granulation_component, facule_component, star.star_nu_max, star_name,  model = "kallinger")
-"""
+oscillation_component = star.calc_powder_density()
+plot_two_component_psd(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name,  model = "kallinger")
+
+star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
+granulation_component, facule_component = star2.theoretical_sigma_tau(model = "karoff")
+oscillation_component = star2.calc_powder_density()
+plot_two_component_psd(star2.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star2.star_nu_max, star_name,  model = "karoff")
+
+
 
 """
 ylim = 1
