@@ -117,6 +117,7 @@ class power_spectrum:
         self.alpha = self.calc_width_parameter(2.95, 0.39)
         self.width_alpha = self.calc_width_parameter(3.08, 3.32)
         self.delta_width_dip = self.calc_width_parameter(-0.47, 0.62)
+        print(self.delta_width_dip)
         self.W_dip = self.calc_width_parameter(4637, -141)
         self.nu_dip = self.calc_width_parameter(2984, 60)
         
@@ -738,6 +739,12 @@ class power_spectrum:
         
         nu_nl = self.calc_nu_nl(n,l)
         
+        log1 = np.log(nu_nl / self.star_nu_max)
+        log2 = np.log(self.width_alpha) 
+        log3 = np.log(self.delta_width_dip)
+        log4 = np.log(nu_nl/self.nu_dip)
+        log5 = np.log(self.W_dip/self.star_nu_max)
+        
         
         line_width = ((self.alpha * np.log(nu_nl / self.star_nu_max)) + np.log(self.width_alpha)) + (np.log(self.delta_width_dip)/(1 + (((2 * np.log(nu_nl/self.nu_dip))/(np.log(self.W_dip/self.star_nu_max)))**2)))
         
@@ -1044,6 +1051,10 @@ def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz,  gra
     """
     #making plot look niice
    
+    cadence =  25#s 
+    v_nq = 1 / (2 * cadence)
+    v_nq = v_nq * 10**6
+    print(v_nq)
     
     
     
@@ -1063,6 +1074,7 @@ def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz,  gra
     
     plt.axvline(star_nu_max, linestyle="--", linewidth=1 , color = 'k', label=r"$\nu_{\max}$")
     plt.axhline(y=ymax, color="m", linestyle="--", linewidth=1)
+    plt.axvline(v_nq, label = 'v nq')
     
     plt.ylabel("PSD (ppm^2 / uHz)")
     plt.xlabel("Frequency (uHz)")
@@ -1119,21 +1131,35 @@ star_name = "Kepler 410 A"
 
 star_mass,  star_radius, star_teff 
 
+star_mass,  star_radius, star_teff = 1.223, 1.357, 6325 
+star_name = "Kepler 410A"
+
+
+
 
 """
 
 
-star_mass,  star_radius, star_teff = 1.223, 1.357, 6325 
+star_mass,  star_radius, star_teff = 1.5, 0.9, 6600 
 star_name = "Kepler 410A"
+
+star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau, sun_facule_sigma)
+
+granulation_component, facule_component = star.theoretical_sigma_tau(model = "Kallinger")
+oscillation_component = star.calc_powder_density()
+plot_two_component_background_with_oscillations(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name,  model = "Kallinger")
+plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
+
+
+
+
+
+"""
 
 star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau, sun_facule_sigma)
 
 model_1_granulation_component, model_1_facule_component, star_granulation_sigma_1, star_granulation_tau_1, star_facule_tau_1, model_2_granulation_component, model_2_facule_component,  star_granulation_sigma_2, star_facule_sigma_2, star_granulation_tau_1, star_facule_tau_1 = star.model_comparison()
 plot_comparison_model(star.freq_powerspectrum_uHz, star_name, star.star_nu_max, model_1_granulation_component, model_1_facule_component, star_granulation_sigma_1, star_granulation_tau_1, star_facule_tau_1, model_2_granulation_component, model_2_facule_component, star_granulation_sigma_2, star_facule_sigma_2)
-
-
-
-"""
 
 granulation_component, facule_component = star.theoretical_sigma_tau(model = "Kallinger")
 oscillation_component = star.calc_powder_density()
