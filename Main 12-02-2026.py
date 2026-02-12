@@ -7,7 +7,6 @@ Created on Thu Jan 29 15:37:38 2026
 """
 
 
-
 import numpy as np
 # from numpy.polynomial import Polynomial
 import matplotlib.pyplot as plt
@@ -15,47 +14,48 @@ import matplotlib.pyplot as plt
 class power_spectrum:
     
     
-    def __init__(self,star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma,  star_name ="", sun_facule_tau = 1, sun_facule_sigma = 1, sun_supergranulation_sigma = 1.9*10**6, sun_supergranulation_tau = 129600):
+    def __init__(self,star_mass, star_radius, star_teff, sun_granulation_tau, sun_granulation_sigma,  sun_facule_tau = 1, sun_facule_sigma = 1, v_nq = 25):
         """
-        
+        Intalises the class, calculates paramters which are always used 
 
         Parameters
         ----------
-        star_mass : float
-            Mass of star in solar masses.
-        star_radius : float
-            Radius of star  in solar radii .
-        star_teff : float
-            Teff of star in kelvin.
-        sun_nu_max : float
-            nu max of sun.
-        sun_teff : float
-            Teff of star in kelvin.
-        sun_granulation_tau : float
-            Granulation timescale of sun .
-        sun_granulation_sigma : float
-            Granulation amplitud of sun.
-            
-        star_name : String, optional
-            Name of star. The default is "".
-        sun_facule_tau : TYPE, optional
-            Facule timescale of sun. The default is 1.
-        sun_facule_sigma : TYPE, optional
-            Facule amplitude of sun . The default is 1.
-        sun_supergranulation_tau : TYPE, optional
-            Facule timescale of sun. The default is 129600.
-        sun_supergranulation_sigma : TYPE, optional
-            Facule amplitude of sun . The default is 1.9 * 10**6.
+        star_mass : int
+            mass of star in solar masses .
+        star_radius : int
+            radius of star in solar radii.
+        star_teff : int
+            effective temperautre of star in kelvin.
+        sun_granulation_tau : int
+            characteristic time scale of granulation, or just get the first background component for the sun. In seconds
+        sun_granulation_sigma : int
+            rms ampltiude of granulation, or just get the first background component for the sun. in ppm 
+        sun_facule_tau : int, optional
+           characteristic time scale of facule, or just get the second background component for the sun. In seconds. 
+            The default is 1.
+        sun_facule_sigma : int, optional
+            rms ampltiude of facule, or just get the second background component for the sun . in ppm 
+            . The default is 1.
+        v_nq : int, optional
+            Nyquist frequency of the simulated observation. The default is 1.
+            Calculated outside of the class as a constant.
+            Telescope / camera dependent 
+
+        Returns
+        -------
+        None.
+
+        """
+        
 
         
-        """
         
         
         
         #sun constants
         
-        self.sun_nu_max = float(sun_nu_max)
-        self.sun_teff = float(sun_teff)
+        self.sun_nu_max = 3090 #nu max of sun
+        self.sun_teff = 5770
         
         self.sun_granulation_tau = float(sun_granulation_tau)
         self.sun_granulation_sigma = float(sun_granulation_sigma)
@@ -63,8 +63,11 @@ class power_spectrum:
         self.sun_facule_tau = float(sun_facule_tau)
         self.sun_facule_sigma = float(sun_facule_sigma)
         
-        self.sun_supergranulation_tau = float(sun_supergranulation_tau) #default value is best i could find from research: https://ui.adsabs.harvard.edu/abs/2018LRSP...15....6R/abstract#:~:text=Rieutord%2C%20Michel-,Abstract,a%20selection%20of%20recent%20findings. <-- see chapter about timescales
-        self.sun_supergranulation_sigma = float(sun_supergranulation_sigma) #same again, different source: https://www.researchgate.net/profile/P-Palle/publication/234514213_A_measurement_of_the_background_solar_velocity_spectrum/links/00b495177361416eba000000/A-measurement-of-the-background-solar-velocity-spectrum.pdf
+        self.v_nq = float(v_nq) #nyquist frequency in seconds 
+        
+        
+        #self.sun_supergranulation_tau = float(sun_supergranulation_tau) #default value is best i could find from research: https://ui.adsabs.harvard.edu/abs/2018LRSP...15....6R/abstract#:~:text=Rieutord%2C%20Michel-,Abstract,a%20selection%20of%20recent%20findings. <-- see chapter about timescales
+        #self.sun_supergranulation_sigma = float(sun_supergranulation_sigma) #same again, different source: https://www.researchgate.net/profile/P-Palle/publication/234514213_A_measurement_of_the_background_solar_velocity_spectrum/links/00b495177361416eba000000/A-measurement-of-the-background-solar-velocity-spectrum.pdf
         
         self.sun_max_rms_amplitude = 2.1  
         
@@ -72,11 +75,11 @@ class power_spectrum:
         
         #line space constants
         
-        self.freq_powerspectrum_uHz = np.linspace(0.1, 10000.0, 50000) #range of frequencies where power spectrum is evaluated
+        self.freq_powerspectrum_uHz = np.linspace(0.1, 100000, 50000) #range of frequencies where power spectrum is evaluated
         self.angular_degree = np.linspace(0,3,4) #List of angular degrees l for oscillations 
         self.radial_mode = np.linspace(0,30,31) #list of radial modes n for oscillations
         
-        self.visibilites = [1, 1.505, 0.620, 0.075]
+        self.visibilites = [1, 1.505, 0.620, 0.075] #
         
         
         
@@ -91,6 +94,8 @@ class power_spectrum:
         
         #calculatuting star properties
         
+        self.nyquist = self.calc_nyquist_term()
+        
         self.nu_max_ratio = self.calc_nu_max_ratio() #vmax ratio 
         self.star_nu_max = self.nu_max_ratio * self.sun_nu_max #vmax of star 
         
@@ -99,7 +104,7 @@ class power_spectrum:
         self.tau_ratio = self.calc_tau_ratio() #granulation time scale         
         self.sigma_ratio = self.calc_sigma_ratio()
         
-        self.star_property_list = [[self.sun_granulation_sigma, self.sun_granulation_tau],[self.sun_facule_sigma, self.sun_facule_tau],[self.sun_supergranulation_sigma, self.sun_supergranulation_tau]]
+        #self.star_property_list = [[self.sun_granulation_sigma, self.sun_granulation_tau],[self.sun_facule_sigma, self.sun_facule_tau],[self.sun_supergranulation_sigma, self.sun_supergranulation_tau]]
         
         #oscillation stuff
         self.sun_delta_nu = 135.1
@@ -117,7 +122,6 @@ class power_spectrum:
         self.alpha = self.calc_width_parameter(2.95, 0.39)
         self.width_alpha = self.calc_width_parameter(3.08, 3.32)
         self.delta_width_dip = self.calc_width_parameter(-0.47, 0.62)
-        print(self.delta_width_dip)
         self.W_dip = self.calc_width_parameter(4637, -141)
         self.nu_dip = self.calc_width_parameter(2984, 60)
         
@@ -183,10 +187,44 @@ class power_spectrum:
             
             granulation_component, facule_component = self.multi_component(star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau)
 
+
+        #granulation_component = granulation_component * self.nyquist      
+        #facule_component = facule_component * self.nyquist
+
+    
         return granulation_component, facule_component
     
     
     def model_comparison(self):
+        """
+        
+
+        Returns
+        -------
+        model_1_granulation_component : TYPE
+            DESCRIPTION.
+        model_1_facule_component : TYPE
+            DESCRIPTION.
+        star_granulation_sigma_1 : TYPE
+            DESCRIPTION.
+        star_granulation_tau_1 : TYPE
+            DESCRIPTION.
+        star_facule_tau_1 : TYPE
+            DESCRIPTION.
+        model_2_granulation_component : TYPE
+            DESCRIPTION.
+        model_2_facule_component : TYPE
+            DESCRIPTION.
+        star_granulation_sigma_2 : TYPE
+            DESCRIPTION.
+        star_facule_sigma_2 : TYPE
+            DESCRIPTION.
+        star_granulation_tau_1 : TYPE
+            DESCRIPTION.
+        star_facule_tau_1 : TYPE
+            DESCRIPTION.
+
+        """
         
         a,  b_1, b_2 = self.calc_scaling_values_kalinger() #calculates sigma, tau for both components of kallinger model using scaling relationships    
         
@@ -278,6 +316,7 @@ class power_spectrum:
     def multi_component(self, star_granulation_sigma, star_granulation_tau, star_facule_sigma, star_facule_tau):
         """
         Models the background due to granulation and facule as two components that take an identical form. One from granulation, one from facule
+        Not used, just an escape function for model selection 
 
         Returns
         -------
@@ -321,6 +360,29 @@ class power_spectrum:
         return mylist
     
     #Different background models
+    
+    def calc_nyquist_term(self):
+        """
+        Calculates the nyquist frequency term from kallinger paper equation 1. 
+        Is the η term in equation 2. 
+
+        Returns
+        -------
+        nyquist : array
+            Value of nyquist equation at each frequency in lin space .
+
+        """
+        
+        x = self.freq_powerspectrum_uHz * (np.pi / (2*v_nq))
+        
+        # nyquist = np.sinc(x / np.pi) #unnormalised sinc function, according to np documentation
+        nyquist = np.sinc(x) #normalised sinc function
+        
+        return nyquist
+        
+        
+        
+    
     
     def calc_kallinger_model(self, a, b_1, b_2):
         """
@@ -516,7 +578,7 @@ class power_spectrum:
         a : float
             rms amplitude (sigma) of both components.
         b_1 : float
-            term related to characteristic timesclale of the first background component.
+            term related to characteristic timesclale of the first background component. micro sec
         b_2 : float
             term related to characteristic timesclale of the second background component.
 
@@ -715,7 +777,7 @@ class power_spectrum:
             
         elif l % 2 == 1:
             nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) + fit * (5/3) * l * (l+1)
-            # nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) - fit * l * (l+1)
+            #nu_nl = self.star_delta_nu * ( n+(l/2) + self.epsilon) - fit * l * (l+1)
         
         return nu_nl
     
@@ -738,6 +800,7 @@ class power_spectrum:
         """
         
         nu_nl = self.calc_nu_nl(n,l)
+        #print(nu_nl)
         
         log1 = np.log(nu_nl / self.star_nu_max)
         log2 = np.log(self.width_alpha) 
@@ -959,6 +1022,42 @@ def plot_multi_component_psd(freq_powerspectrum_uHz,  granulation_component, fac
     plt.show()
     
 def plot_comparison_model(freq_powerspectrum_uHz, star_name,star_nu_max,  model_1_granulation_component, model_1_facule_component, star_granulation_sigma_1, star_granulation_tau_1, star_facule_tau_1, model_2_granulation_component, model_2_facule_component,  star_granulation_sigma_2, star_facule_sigma_2):
+    """
+    For comparing two seperate models for two component background models
+
+    Parameters
+    ----------
+    freq_powerspectrum_uHz : TYPE
+        DESCRIPTION.
+    star_name : TYPE
+        DESCRIPTION.
+    star_nu_max : TYPE
+        DESCRIPTION.
+    model_1_granulation_component : TYPE
+        DESCRIPTION.
+    model_1_facule_component : TYPE
+        DESCRIPTION.
+    star_granulation_sigma_1 : TYPE
+        DESCRIPTION.
+    star_granulation_tau_1 : TYPE
+        DESCRIPTION.
+    star_facule_tau_1 : TYPE
+        DESCRIPTION.
+    model_2_granulation_component : TYPE
+        DESCRIPTION.
+    model_2_facule_component : TYPE
+        DESCRIPTION.
+    star_granulation_sigma_2 : TYPE
+        DESCRIPTION.
+    star_facule_sigma_2 : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    
     
     total_background_model_1 = model_1_facule_component + model_1_granulation_component
     total_background_model_2 = model_2_facule_component + model_2_granulation_component
@@ -1024,7 +1123,7 @@ def plot_one_component_psd(freq_powerspectrum_uHz,  granulation_component, oscil
 
 
     
-def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz,  granulation_component, facule_component, oscillation_component, star_nu_max, star_name, model):
+def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component, star_nu_max, star_name, v_nq, model):
     """
     Plot models.
     for 410A kallinger
@@ -1051,14 +1150,13 @@ def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz,  gra
     """
     #making plot look niice
    
-    cadence =  25#s 
-    v_nq = 1 / (2 * cadence)
-    v_nq = v_nq * 10**6
-    print(v_nq)
+   
     
     
     
     total_background = facule_component + granulation_component + oscillation_component
+    total_background = total_background * (star.nyquist**2)
+    print(star.nyquist)
     
     ymax = total_background.max()
     
@@ -1069,6 +1167,7 @@ def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz,  gra
     plt.loglog(freq_powerspectrum_uHz, total_background, label='Total ')
     plt.loglog(freq_powerspectrum_uHz, facule_component, linestyle = "--", label='Facule background ')
     plt.loglog(freq_powerspectrum_uHz, granulation_component, linestyle = "--", label='Granulation background ')
+    
     plt.loglog(freq_powerspectrum_uHz, oscillation_component,color="tab:red", lw=0.6, alpha=0.25, label="Oscillation component",zorder=1)    
     plt.title(f"Star {star_name} power spectrum")
     
@@ -1079,7 +1178,7 @@ def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz,  gra
     plt.ylabel("PSD (ppm^2 / uHz)")
     plt.xlabel("Frequency (uHz)")
     
-
+    plt.loglog(freq_powerspectrum_uHz, star.nyquist)
     
     plt.ylim(bottom = 0.1)
     plt.xlim(left = 10)
@@ -1102,14 +1201,14 @@ def plot_oscillation(freq_powerspectrum_uHz,  oscillation_component, star_nu_max
     plt.show()
     
     
-#Sun constants    
-sun_nu_max = 3090
-sun_teff = 5772.0
+
 
 
 #All values taken from  Karoff 2013. Comparison of karoff model with observed values and scaling vaalues
 sun_granulation_tau, sun_granulation_sigma, sun_facule_tau, sun_facule_sigma = 214, 62.4, 65.8, 50.1
-
+cadence = 25 # cadence of pluto in sconds 
+v_nq = 1 / (2 * cadence) #nyquist frequency in seconds
+v_nq = v_nq * 10**6 
 
 
 """
@@ -1140,14 +1239,16 @@ star_name = "Kepler 410A"
 """
 
 
-star_mass,  star_radius, star_teff = 1.5, 0.9, 6600 
-star_name = "Kepler 410A"
+star_mass,  star_radius, star_teff = 1.010, 1.105, 5751 
+star_name = "16 Cyg B"
 
-star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau, sun_facule_sigma)
+
+
+star = power_spectrum(star_mass, star_radius, star_teff, sun_granulation_tau, sun_granulation_sigma, v_nq = v_nq)
 
 granulation_component, facule_component = star.theoretical_sigma_tau(model = "Kallinger")
 oscillation_component = star.calc_powder_density()
-plot_two_component_background_with_oscillations(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name,  model = "Kallinger")
+plot_two_component_background_with_oscillations(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name, v_nq ,  model = "Kallinger" )
 plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
 
 
