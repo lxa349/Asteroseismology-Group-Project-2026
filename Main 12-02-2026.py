@@ -376,7 +376,7 @@ class power_spectrum:
         x = self.freq_powerspectrum_uHz * (np.pi / (2*v_nq))
         
         # nyquist = np.sinc(x / np.pi) #unnormalised sinc function, according to np documentation
-        nyquist = np.sinc(x) #normalised sinc function
+        nyquist = np.sinc(x) #normalised sinc function, apparently the correct one 
         
         return nyquist
         
@@ -591,7 +591,6 @@ class power_spectrum:
         #print(f"a without mass {a}")
 
         a = 3710 * ((self.star_nu_max)**(-0.613)) * ((self.star_mass)**(-0.26)) #with mass term 
-        print(f"a with mass {a}")
 
         b_1 = 0.317 * (self.star_nu_max)**(0.970)
         b_2 = 0.948 * (self.star_nu_max)**(0.992)
@@ -1175,13 +1174,15 @@ def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz, gran
     plt.axhline(y=ymax, color="m", linestyle="--", linewidth=1)
     plt.axvline(v_nq, label = 'v nq')
     
+    #plt.axvline(200, label = '2000 uhz', color = 'k', linewidth = 2)
+    
     plt.ylabel("PSD (ppm^2 / uHz)")
     plt.xlabel("Frequency (uHz)")
     
-    plt.loglog(freq_powerspectrum_uHz, star.nyquist)
+    #plt.loglog(freq_powerspectrum_uHz, star.nyquist)
     
     plt.ylim(bottom = 0.1)
-    plt.xlim(left = 10)
+    plt.xlim(left = 100, right = 10000)
     
     plt.legend(fontsize=9)
 
@@ -1209,6 +1210,7 @@ sun_granulation_tau, sun_granulation_sigma, sun_facule_tau, sun_facule_sigma = 2
 cadence = 25 # cadence of pluto in sconds 
 v_nq = 1 / (2 * cadence) #nyquist frequency in seconds
 v_nq = v_nq * 10**6 
+print(v_nq)
 
 
 """
@@ -1233,14 +1235,32 @@ star_mass,  star_radius, star_teff
 star_mass,  star_radius, star_teff = 1.223, 1.357, 6325 
 star_name = "Kepler 410A"
 
+star_mass,  star_radius, star_teff = 1.010, 1.105, 5751 
+star_name = "16 Cyg B"
+
+
+
+5091962, 9700053 data from The Second APOKASC Catalog: The Empirical Approach
+
+star_mass,  star_radius, star_teff =1.067 , 12.907 , 4529.4  
+star_name = "KIC 5091962" 
+
+star_mass,  star_radius, star_teff = 1.153 ,4.163  , 4964.8  
+star_name = "KIC 9700053"
+
+
+from Temporal Variations in Asteroseismic Frequencies of KIC 6106415: Insights into the Solar-Stellar
+Activity from GOLF and Kepler Observations
+
+star_mass,  star_radius, star_teff = 1.039, 1.213, 6037
+star_name = "KIC 6106415"
+
 
 
 
 """
-
-
-star_mass,  star_radius, star_teff = 1.010, 1.105, 5751 
-star_name = "16 Cyg B"
+star_mass,  star_radius, star_teff = 1.039, 1.213, 6037
+star_name = "KIC 6106415"
 
 
 
@@ -1252,7 +1272,7 @@ plot_two_component_background_with_oscillations(star.freq_powerspectrum_uHz, gra
 plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
 
 
-
+ 
 
 
 """
