@@ -11,15 +11,15 @@ TO CHECK:
     lorentz function ~O~
     fit function ~O~
 TO ADD IN:
-    Eta scaling ~?~
+    Eta scaling ~?~ 
     New linewidth parameter values ~O~
     power amplitude = amp ~O~
 '''
 
-from astropy.table import Table
-from astropy.io import ascii
-import glob
-import astropy.units as u
+#from astropy.table import Table
+#from astropy.io import ascii
+#import glob
+#import astropy.units as u
 import csv
 import numpy as np
 # from numpy.polynomial import Polynomial
@@ -394,8 +394,8 @@ class power_spectrum:
         
         x = self.freq_powerspectrum_uHz * (np.pi / (2*v_nq))
         
-        # nyquist = np.sinc(x / np.pi) #unnormalised sinc function, according to np documentation
-        nyquist = np.sinc(x) #normalised sinc function
+        nyquist = np.sinc(x / np.pi) #unnormalised sinc function, according to np documentation
+        #nyquist = np.sinc(x) #normalised sinc function, apparently the correct one. Maybe not?
         
         return nyquist
         
@@ -820,6 +820,9 @@ class power_spectrum:
 
         """
         
+        
+        
+        
         nu_nl = self.calc_nu_nl(n,l)
         
         line_width = ((self.alpha * np.log(nu_nl / self.star_nu_max)) + np.log(self.width_alpha)) + (np.log(self.delta_width_dip)/(1 + (((2 * np.log(nu_nl/self.nu_dip))/(np.log(self.W_dip/self.star_nu_max)))**2)))
@@ -979,45 +982,7 @@ def calc_lorentz(freq, centroid, FWHM):
     x = ((FWHM/2)**2 / ((freq - centroid)**2 + (FWHM/2)**2)) #lorentz curve, !must be multipled by the amplitude!
     return x 
 
-def plot_multi_component_psd(freq_powerspectrum_uHz,  granulation_component, facule_component,  star_nu_max, star_name,  practical_granulation,practical_facule, ylim):
-    """
-    Plots power specturm of multi component model. Used to compared theoretical sigma models and measured models.  
 
-    Returns
-    -------
-    None.
-
-    """
-    
-    total_background_practical = practical_facule + practical_granulation
-    total_background = facule_component + granulation_component
-    
-    
-    plt.figure()
-    
-    plt.semilogy(freq_powerspectrum_uHz, total_background, label='Total theory')
-    plt.semilogy(freq_powerspectrum_uHz, facule_component, label='Facule theory')
-    plt.semilogy(freq_powerspectrum_uHz, granulation_component, label='Granulation theory')
-
-    plt.semilogy(freq_powerspectrum_uHz, practical_granulation, label='Gran practical')
-    plt.semilogy(freq_powerspectrum_uHz, practical_facule, label='Facule practicaFl')
-    plt.semilogy(freq_powerspectrum_uHz, total_background_practical, label='Total practical')
-
-    
-    plt.axvline(star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
-    plt.title(f"Background spectrum due to granulation and facule for star {star_name}, ylim = {ylim}")
-    
-    plt.ylim(bottom=ylim)
-    plt.xlim(left=10, right = 2700)
-    
-    plt.xlabel(r"Frequency $\nu$ ($\mu$Hz)")
-    plt.ylabel(r"Granulation power, ppm^2 / µHz")
-    
-    
-    
-    plt.legend()
-    plt.show()
-    
 def plot_comparison_model(freq_powerspectrum_uHz, star_name,star_nu_max,  model_1_granulation_component, model_1_facule_component, star_granulation_sigma_1, star_granulation_tau_1, star_facule_tau_1, model_2_granulation_component, model_2_facule_component,  star_granulation_sigma_2, star_facule_sigma_2):
     """
     For comparing two seperate models for two component background models
@@ -1118,6 +1083,49 @@ def plot_one_component_psd(freq_powerspectrum_uHz,  granulation_component, oscil
     plt.legend()
     plt.show()
 
+def plot_multi_component_psd(freq_powerspectrum_uHz, granulation_component, facule_component, star_nu_max, star_name, v_nq, model):
+    """
+    Plots two component background only model 
+
+    Returns
+    -------
+    None.
+
+    """
+    total_background = facule_component + granulation_component  #adds both background components
+    total_background = total_background * (star.nyquist**2) #applies eta term (nyquist)
+    facule_component = facule_component * (star.nyquist**2)
+    granulation_component = granulation_component* (star.nyquist**2)
+    
+    
+    #ymax = total_background.max()
+    
+    plt.figure()    
+    plt.loglog(freq_powerspectrum_uHz, total_background, label='Total ')
+    plt.loglog(freq_powerspectrum_uHz, facule_component, linestyle = "--", label='Second background component ')
+    plt.loglog(freq_powerspectrum_uHz, granulation_component, linestyle = "--", label='First background component ')
+    
+    plt.title(f"Star {star_name} background power spectrum")
+    
+    plt.axvline(star_nu_max, linestyle="--", linewidth=1 , color = 'k', label=r"$\nu_{\max}$")
+    #plt.axhline(y=ymax, color="m", linestyle="--", linewidth=1)
+    plt.axvline(v_nq, label = 'v nq', color = 'r')
+    
+    #plt.axvline(200, label = '2000 uhz', color = 'k', linewidth = 2)
+    
+    plt.ylabel("PSD (ppm^2 / uHz)")
+    plt.xlabel("Frequency (uHz)")
+    
+    plt.loglog(freq_powerspectrum_uHz, (star.nyquist**2), label = 'eta nyquist term')
+    
+    plt.ylim(bottom = 0.001, top = 100)
+    plt.xlim(left = 1, right = 100000)
+    
+    plt.legend(fontsize=9)
+
+    plt.show()
+  
+    
 
     
 def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component, star_nu_max, star_name, v_nq, model):
@@ -1127,39 +1135,13 @@ def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz, gran
     plt.ylim(bottom = 0.1)
     plt.xlim(left = 10)
 
-    Parameters
-    ----------
-    freq_powerspectrum_uHz : TYPE
-        DESCRIPTION.
-    granulation_component : TYPE
-        DESCRIPTION.
-    facule_component : TYPE
-        DESCRIPTION.
-    star_nu_max : TYPE
-        DESCRIPTION.
-    star_name : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
     """
-    #making plot look niice
-   
-   
-    
-    
-    
-    total_background = facule_component + granulation_component + oscillation_component
-    total_background = total_background * (star.nyquist**2)
-    print(star.nyquist)
+       
+    total_background = facule_component + granulation_component + oscillation_component  #adds both background components and oscillation
+    total_background = total_background * (star.nyquist**2) #applies eta term (nyquist)
     
     ymax = total_background.max()
     
-    
-
-
     plt.figure()    
     plt.loglog(freq_powerspectrum_uHz, total_background, label='Total ')
     plt.loglog(freq_powerspectrum_uHz, facule_component, linestyle = "--", label='Facule background ')
@@ -1170,42 +1152,23 @@ def plot_two_component_background_with_oscillations(freq_powerspectrum_uHz, gran
     
     plt.axvline(star_nu_max, linestyle="--", linewidth=1 , color = 'k', label=r"$\nu_{\max}$")
     plt.axhline(y=ymax, color="m", linestyle="--", linewidth=1)
-    plt.axvline(v_nq, label = 'v nq')
+    plt.axvline(v_nq, label = 'v nq', color = 'r')
+    
+    #plt.axvline(200, label = '2000 uhz', color = 'k', linewidth = 2)
     
     plt.ylabel("PSD (ppm^2 / uHz)")
     plt.xlabel("Frequency (uHz)")
     
-    #plt.loglog(freq_powerspectrum_uHz, star.nyquist)
+    #plt.loglog(freq_powerspectrum_uHz, (star.nyquist**2), label = 'eta nyquist term')
     
     plt.ylim(bottom = 0.1)
-    plt.xlim(left = 10)
+    plt.xlim(left = 100, right = 10000)
     
     plt.legend(fontsize=9)
 
     plt.show()
  
     
-''' THIS IS TO TEST PLOTS AGAINST THE LUND DATA FOR STAR SAXO2 -- IGNORE 
-def legacy_data():
-    table = Table.read('/home/isaac/Documents/Asteroseismology Project/table6.tex').to_pandas()
-    # n_list = []
-    # l_list = []
-    freq_list = []
-    amp_list = []
-    width_list = []
-    for i in range(0, len(table)):
-        if table["Amplitude"][i] == table["Amplitude"][i]:
-            # n_list.append(float(table["n"][i][1:-1]))
-            # l_list.append(float(table["l"][i][1:-1])) 
-            freq_list.append(float(table["Frequency"][i][1:-26])) 
-            amp_list.append(float(table["Amplitude"][i][1:-26])) 
-            width_list.append(float(table["Linewidth"][i][1:-26]))
-    legacy = np.zeros(len(star.freq_powerspectrum_uHz))
-    for count in range(0, len(freq_list)):
-        legacy += amp_list[count] * calc_lorentz(star.freq_powerspectrum_uHz, freq_list[count], width_list[count]/2)
-    return legacy
-'''
-
 def plot_oscillation(freq_powerspectrum_uHz,  oscillation_component, star_nu_max, star_name):
     
 
@@ -1225,18 +1188,83 @@ def plot_oscillation(freq_powerspectrum_uHz,  oscillation_component, star_nu_max
     plt.legend(loc = "best", fontsize = 8)
     plt.show()
     
+def plot_oscillation_max(freq_powerspectrum_uHz,  oscillation_component, star_nu_max, star_name):
+    
+
+        
+    plt.plot(freq_powerspectrum_uHz, oscillation_component, color = "blue", label = "p-mode oscillations")
+    # plt.axvline(max_freq(test_star.mass_star, test_star.r_star, test_star.teff_star) * 3100, ls='--', color='r', label = "nu_max")
+    plt.axvline(star_nu_max, ls='--', color='r', label = f"nu_max {star_nu_max:.2f}")
+    plt.xlim(star.star_nu_max-600,star.star_nu_max+600)
+    plt.title(f"{star_name} oscillations Power Spectrum")
+    plt.xlabel("Frequency /microHertz")
+    plt.ylabel("Power /ppm^2 Hz^-1")
+    plt.legend()
+    plt.show()
     
 
 
+                
 
-#All values taken from  Karoff 2013. Comparison of karoff model with observed values and scaling vaalues
-sun_granulation_tau, sun_granulation_sigma, sun_facule_tau, sun_facule_sigma = 214, 62.4, 65.8, 50.1
-cadence = 25 # cadence of pluto in sconds 
-v_nq = 1 / (2 * cadence) #nyquist frequency in seconds
-v_nq = v_nq * 10**6 
-print(v_nq)
+    
+#THIS IS TO TEST PLOTS AGAINST THE LUND DATA FOR STAR SAXO2 -- IGNORE 
+"""
+def legacy_data():
+    table = Table.read('/home/isaac/Documents/Asteroseismology Project/table6.tex').to_pandas()
+    # n_list = []
+    # l_list = []
+    freq_list = []
+    amp_list = []
+    width_list = []
+    for i in range(0, len(table)):
+        if table["Amplitude"][i] == table["Amplitude"][i]:
+            # n_list.append(float(table["n"][i][1:-1]))
+            # l_list.append(float(table["l"][i][1:-1])) 
+            freq_list.append(float(table["Frequency"][i][1:-26])) 
+            amp_list.append(float(table["Amplitude"][i][1:-26])) 
+            width_list.append(float(table["Linewidth"][i][1:-26]))
+    legacy = np.zeros(len(star.freq_powerspectrum_uHz))
+    for count in range(0, len(freq_list)):
+        legacy += amp_list[count] * calc_lorentz(star.freq_powerspectrum_uHz, freq_list[count], width_list[count]/2)
+    return legacy
+
+def list_import(file_input):
+    attribute_list = []  
+    with open(f"{file_input}", 'r') as myfile:
+        r = csv.reader(myfile)
+        for row in r:
+            attribute_list.append([row[0], row[1], row[2], row[3]])
+        
+    return attribute_list #NOTE: first entry is the column headers, so when reading from this you should skip 1
+
+ppm = u.def_unit('ppm')
+
+star_list = list_import("Adjusted final list.csv")
+
+def list_stuff_leo():
+    
+    for i in range(1, len(star_list)):
+        mystar = star_list[i]
+        star_name = mystar[0]
+        star = power_spectrum(mystar[1], mystar[2], mystar[3], sun_granulation_tau, sun_granulation_sigma, v_nq = v_nq)
+
+        granulation_component, facule_component = star.theoretical_sigma_tau(model = "Kallinger")
+        oscillation_component = star.calc_powder_density()
+        plot_two_component_background_with_oscillations(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name, v_nq ,  model = "Kallinger" )
+        plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
+        #commented out for running speed
+
+        with open(f"starlist/{star_name}.csv", 'w', newline='') as myfile: #note the outputted file is large!
+            wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+            wr.writerow(["Freq", "Power"])
+            for i in range(1, len(star.freq_powerspectrum_uHz)):
+                wr.writerow([star.freq_powerspectrum_uHz[i], granulation_component[i] + facule_component[i]])
+"""
+    
 
 
+            
+            
 """
 Values taken from kepler input catalogue 
 Kallinger model testing graphs.
@@ -1259,166 +1287,51 @@ star_mass,  star_radius, star_teff
 star_mass,  star_radius, star_teff = 1.223, 1.357, 6325 
 star_name = "Kepler 410A"
 
-
-
-
-"""
-
-'''16CYGNIB
 star_mass,  star_radius, star_teff = 1.010, 1.105, 5751 
 star_name = "16 Cyg B"
-'''
-
-#star_mass,  star_radius, star_teff = 1.039, 1.213, 6037
-#star_name = "KIC 6106415"
 
 
-#star = power_spectrum(star_mass, star_radius, star_teff, sun_granulation_tau, sun_granulation_sigma, v_nq = v_nq)
 
-#granulation_component, facule_component = star.theoretical_sigma_tau(model = "Kallinger")
-#oscillation_component = star.calc_powder_density()
-#plot_two_component_background_with_oscillations(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name, v_nq ,  model = "Kallinger" )
-#plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
+5091962, 9700053 data from The Second APOKASC Catalog: The Empirical Approach
+
+star_mass,  star_radius, star_teff =1.067 , 12.907 , 4529.4  
+star_name = "KIC 5091962" 
+
+star_mass,  star_radius, star_teff = 1.153 ,4.163  , 4964.8  
+star_name = "KIC 9700053"
 
 
-def list_import(file_input):
-    attribute_list = []  
-    with open(f"{file_input}", 'r') as myfile:
-        r = csv.reader(myfile)
-        for row in r:
-            attribute_list.append([row[0], row[1], row[2], row[3]])
-        
-    return attribute_list #NOTE: first entry is the column headers, so when reading from this you should skip 1
+from Temporal Variations in Asteroseismic Frequencies of KIC 6106415: Insights into the Solar-Stellar
+Activity from GOLF and Kepler Observations
 
-ppm = u.def_unit('ppm')
-
-star_list = list_import("Adjusted final list.csv")
-
-for i in range(1, len(star_list)):
-    mystar = star_list[i]
-    star_name = mystar[0]
-    star = power_spectrum(mystar[1], mystar[2], mystar[3], sun_granulation_tau, sun_granulation_sigma, v_nq = v_nq)
-
-    granulation_component, facule_component = star.theoretical_sigma_tau(model = "Kallinger")
-    oscillation_component = star.calc_powder_density()
-    plot_two_component_background_with_oscillations(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name, v_nq ,  model = "Kallinger" )
-    plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
-    #commented out for running speed
-
-    with open(f"starlist/{star_name}.csv", 'w', newline='') as myfile: #note the outputted file is large!
-        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-        wr.writerow(["Freq", "Power"])
-        for i in range(1, len(star.freq_powerspectrum_uHz)):
-            wr.writerow([star.freq_powerspectrum_uHz[i], granulation_component[i] + facule_component[i]])
-
+star_mass,  star_radius, star_teff = 1.039, 1.213, 6037
+star_name = "KIC 6106415"
 
 """
 
-star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau, sun_facule_sigma)
+#All values taken from  Karoff 2013. Comparison of karoff model with observed values and scaling vaalues
+sun_granulation_tau, sun_granulation_sigma, sun_facule_tau, sun_facule_sigma = 214, 62.4, 65.8, 50.1
+cadence = 25 # cadence of pluto in sconds 
+#cadence = 29.42 * 60 #cadence of long cadence kepler
+#caadence = 58.82 #cadence of short  cadence kepler
+v_nq = 1 / (2 * cadence) #nyquist frequency in seconds
+v_nq = v_nq * 10**6 
+print(v_nq)
 
-model_1_granulation_component, model_1_facule_component, star_granulation_sigma_1, star_granulation_tau_1, star_facule_tau_1, model_2_granulation_component, model_2_facule_component,  star_granulation_sigma_2, star_facule_sigma_2, star_granulation_tau_1, star_facule_tau_1 = star.model_comparison()
-plot_comparison_model(star.freq_powerspectrum_uHz, star_name, star.star_nu_max, model_1_granulation_component, model_1_facule_component, star_granulation_sigma_1, star_granulation_tau_1, star_facule_tau_1, model_2_granulation_component, model_2_facule_component, star_granulation_sigma_2, star_facule_sigma_2)
+star_mass,  star_radius, star_teff = 1.039, 1.213, 6037
+star_name = "KIC 6106415"
+
+
+
+
+
+star = power_spectrum(star_mass, star_radius, star_teff, sun_granulation_tau, sun_granulation_sigma, v_nq = v_nq)
 
 granulation_component, facule_component = star.theoretical_sigma_tau(model = "Kallinger")
 oscillation_component = star.calc_powder_density()
-plot_two_component_background_with_oscillations(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name,  model = "Kallinger")
-plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
+plot_multi_component_psd(star.freq_powerspectrum_uHz, granulation_component, facule_component, star.star_nu_max, star_name, v_nq ,  model = "Kallinger" )
+plot_oscillation_max(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
 
-
-star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau, sun_facule_sigma )
-granulation_component, facule_component = star.theoretical_sigma_tau(model = "karoff")
-oscillation_component = star.calc_powder_density()
-plot_two_component_background_with_oscillations(star.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star.star_nu_max, star_name,  model = "Kallinger")
-plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name) 
-
-star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
-granulation_component, facule_component = star.theoretical_sigma_tau(model = "ball")
-oscillation_component = star.calc_powder_density()
-
-plot_oscillation(star.freq_powerspectrum_uHz, oscillation_component, star.star_nu_max, star_name)
-plot_one_component_psd(star.freq_powerspectrum_uHz, granulation_component, oscillation_component, star.star_nu_max, star_name, model = "ball")
-
-star_mass,  star_radius, star_teff   =  1.01, 1.15, 5416
-star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical = 62.8, 280.8, 76.5, 66.
-star_name = "KIC 6603624"
-
-#compaes karoff model with theoreitcal scaling realtionship sigma values to sigma values from karoff 2013 paper 
-star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name, sun_facule_tau , sun_facule_sigma)
-granulation_component_practical, facule_component_practical = star.defined_sigma_tau(star_granultion_sigma_practical, star_granulation_tau_practical, star_facule_sigma_practical, star_facule_tau_practical, model="karoff")
-granulation_component_theory, facule_component_theory = star.theoretical_sigma_tau(model="karoff")
-star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
-granulation_component, facule_component = star2.theoretical_sigma_tau(model = "karoff")
-oscillation_component = star2.calc_powder_density()
-plot_two_component_psd(star2.freq_powerspectrum_uHz, granulation_component, facule_component, oscillation_component,  star2.star_nu_max, star_name,  model = "karoff")
-
-
-
-ylim = 1
-#plot_multi_component_psd(star.freq_powerspectrum_uHz, granulation_component_theory, facule_component_theory, star.star_nu_max, star_name, granulation_component_practical, facule_component_practical, ylim)
-
-star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau, sun_granulation_sigma)
-granulation_component = star2.theoretical_sigma_tau(model = 'ball')
-
-
-sun_granulation_tau = 214.3
-sun_granulation_sigma = 62.4
-
-sun_facule_tau = 65.8
-sun_facule_sigma = 50.1
-
-star2 = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma,  star_name , sun_facule_tau , sun_facule_sigma )
-star2.multi_component()     
-
-        
-
-     
-star_mass, star_radius, star_teff = 1.223, 1.357, 6325
-star_name = "Kepler 410"
-sun_nu_max = 3090
-sun_teff = 5772.0
-sun_granulation_tau = 214
-sun_granulation_sigma = 63
-
-
-
-
-star = power_spectrum(star_mass, star_radius, star_teff, sun_nu_max, sun_teff, sun_granulation_tau,  sun_granulation_sigma, star_name)
-
-muh_components = star.multi_component_scalable()
-
-total_background = muh_components[0] + muh_components[1] + muh_components[2]
-
-#total_background, granulation_component, facule_component, supergranulation_component = star.multi_component_scalable()
-oscillation_psd = star.calc_powder_density()
-total_psd = total_background + oscillation_psd
-
-#plots
-
-plt.loglog(star.freq_powerspectrum_uHz, total_psd, color = 'blue', label = "power spectrum")
-plt.axvline(star.star_nu_max, ls = '--', color = 'r', label = "nu_max")
-plt.grid(which='major')
-#plt.xlim(500, 5000)
-plt.title("Power Spectrum - Granulation and Oscillations")
-plt.ylabel("Power (ppm^2 Hz^-1)")
-plt.xlabel("Frequency (uHz)")
-plt.legend()
-plt.show()
-
-
-plt.figure()
-#plt.loglog(star.freq_powerspectrum_uHz,total_background, label = 'Total ')
-plt.loglog(star.freq_powerspectrum_uHz, muh_components[2], label = 'Supergranulation component')
-plt.loglog(star.freq_powerspectrum_uHz, muh_components[1], label = 'Facule component')
-plt.loglog(star.freq_powerspectrum_uHz, muh_components[0], label = 'Granulation component')
-plt.axvline(star.star_nu_max, linestyle="--", label=r"$\nu_{\max}$")
-plt.ylim(bottom=0.1)
-plt.xlim(left=10)
-plt.xlabel(r"Frequency $\nu$ ($\mu$Hz)")
-plt.ylabel(r"Granulation power, ppm^2 / µHz")
-plt.legend()
-plt.tight_layout()
-plt.show()
-"""
 
 
 
