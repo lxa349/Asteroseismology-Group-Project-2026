@@ -1,0 +1,66 @@
+# 
+# VizieR Astronomical Server vizier.cds.unistra.fr
+# Date: 2026-02-19T14:36:33 [V7.5.4]
+# In case of problem, please report to:	cds-question@unistra.fr
+# 
+# 
+# Coosys	J2000:	eq_FK5 J2000
+# INFO	service_protocol=ASU	  IVOID of the protocol through which the data was retrieved
+# INFO	request_date=2026-02-19T14:36:33	  Query execution date
+# INFO	request=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-oc.form=dec&-out.max=unlimited&-order=I&-out.src=J/A+A/702/A77/tableb1&-c.eq=J2000&-c.r=  2&-c.u=arcmin&-c.geom=r&-source=J/A+A/702/A77/tableb1&-out=Seq&-out=RA_ICRS&-out=DE_ICRS&-out=GaiaDR3&-out=Alias&-out=HIP&-out=Gmag&-out=Vmag&-out=Kmag&-out=B-V&-out=BP-RP&-out=plx&-out=SpType&-out=MstarFlame&-out=Dataset&-out=NFOV&-out=NAL&-out=AEN&-out=RUWE&-out=sigmacalib&-out=sigmaAL&-out=sigmaatt&-out=alphaU&-out=pRUWE&-out=s_RUWE&-out=Mplmin&-out=smaPlmin&-out=rhoPlmin&-out=WDS&-out=NSSflag&-out=NPlNEA&	  Full request URL (POST)
+# INFO	contact=cds-question@unistra.fr	  Email or URL to contact publisher
+# INFO	server_software=VizieR/7.5.4	  Software version
+# INFO	publisher=CDS	  Data centre that produced the VOTable
+# RESOURCE=yCat_37020077
+# Name: J/A+A/702/A77
+# Title: Catalog of 9698 planet candidate solar-type hosts (Kiefer+, 2025)
+# INFO	ivoid=ivo://cds.vizier/j/a+a/702/a77	    IVOID of underlying data collection
+# INFO	data_ivoid=ivo://cds.vizier/j/a+a/702/a77	    IVOID of underlying data collection
+# INFO	creator=Kiefer F.	    First author or institution
+# INFO	cites=bibcode:2025A&A...702A..77K	    Article or Data origin sources
+# INFO	journal=A&A	    Journal name
+# INFO	original_date=2025	    Year of the article publication
+# INFO	reference_url=https://cdsarc.cds.unistra.fr/viz-bin/cat/J/A+A/702/A77	    Dataset landing page
+# INFO	publication_date=2025-12-01	    Date of first publication in the data centre
+# INFO	rights_uri=https://cds.unistra.fr/vizier-org/licences_vizier.html	    Licence URI
+# Coosys	H_2016.000:	ICRS
+# Table	J_A_A_702_A77_tableb1:
+# Name: J/A+A/702/A77/tableb1
+# Title: Candidates systems
+# Column	Seq	(I4)	[1/9698] Identification number in the catalog (Catalog ID)	[ucd=meta.id]
+# Column	RA_ICRS	(F15.11)	Right ascension (ICRS) at Ep=2016.0 (RA)	[ucd=pos.eq.ra;meta.main]
+# Column	DE_ICRS	(F15.11)	Declination (ICRS) Ep=2016.0 (DE)	[ucd=pos.eq.dec;meta.main]
+# Column	GaiaDR3	(I19)	Gaia DR3 Identification number (Gaia DR3 ID)	[ucd=meta.id;meta.main]
+# Column	Alias	(a32)	Main alias of the star (main alias)	[ucd=meta.id]
+# Column	HIP	(A10)	Name of the star in the Hipparcos catalog (HIP name)	[ucd=meta.id]
+# Column	Gmag	(F5.2)	Magnitude in Gaia G-band (G)	[ucd=phot.mag;em.opt]
+# Column	Vmag	(F6.2)	? Magnitude in Johnson V-band (V)	[ucd=phot.mag;em.opt.V]
+# Column	Kmag	(F6.2)	? Magnitude in Johnson K-band (K)	[ucd=phot.mag;em.IR.K]
+# Column	B-V	(F6.3)	? B-V color index from Johnson B- and V-band magnitude (B-V)	[ucd=phot.color;em.opt.B;em.opt.V]
+# Column	BP-RP	(F6.3)	BP-RP color index from Gaia BP- and RP-band magnitude (BP-RP)	[ucd=phot.color;em.opt.B;em.opt.R]
+# Column	plx	(F5.2)	Parallax from the Gaia DR3 Catalog (Gaia Collaboration, Vallenari et al., 2023A&A...674A...1G) (PLX)	[ucd=pos.parallax.trig]
+# Column	SpType	(a15)	Spectral type from Simbad (SP TYPE)	[ucd=src.spType]
+# Column	MstarFlame	(F6.3)	Mass of the star from the mass-flame parameter in the Gaia CU8 catalog (Gaia Collaboration, Creevey et al., 2023A&A...674A...1G) (Mstar_Flame)	[ucd=phys.mass]
+# Column	Dataset	(A2)	Identification of Gaia sources' astrometry fitted with 5 or 6 parameters (5p/6p) (Dataset)	[ucd=meta.id;meta.modelled]
+# Column	NFOV	(I3)	[14/170] Number of field-of-view (FOV) transits during the Gaia DR3 observing campaign (astrometric_matched_transit in the Gaia DR3 catalog) (N_FOV)	[ucd=meta.id;instr.fov]
+# Column	NAL	(I1)	[8/9] Deduced average number of astrometric along-scan angle measurements during a single FOV transit (N_AL)	[ucd=meta.number]
+# Column	AEN	(F6.3)	astrometric_excess_noise from Gaia DR3 catalog (AEN)	[ucd=stat.fit.param]
+# Column	RUWE	(F6.3)	Renormalised unit weight error from Gaia DR3 catalog (RUWE)	[ucd=stat.error]
+# Column	sigmacalib	(F6.3)	G-mag and BP-RP dependent calibration noise as determined in Paper I (Kiefer, Lagrange, et al. 2024a) (sigma_calib)	[ucd=stat.correlation]
+# Column	sigmaAL	(F6.3)	G-mag and BP-RP dependent along-scan angle measurement noise as determined in Paper I (sigma_AL)	[ucd=stat.correlation]
+# Column	sigmaatt	(F6.3)	RA-Dec dependent attitude excess noise as determined in Paper I (sigma_att)	[ucd=stat.correlation]
+# Column	alphaU	(F6.3)	Astrometric signature determined from the RUWE (alpha_UEVA_RUWE)	[ucd=stat.fit.param]
+# Column	pRUWE	(E9.2)	p-value of the RUWE in the single-star null hypothesis (Paper I) (p_RUWE)	[ucd=stat.fit.goodness]
+# Column	s_RUWE	(F6.1)	Significance of the RUWE as a number of sigma (s_RUWE) (1)	[ucd=meta.number;phys.atmol.number]
+# Column	Mplmin	(F4.1)	Approximate minimum mass of the planet deduced from the RUWE (Papers I & II) (M_planet_min)	[ucd=phys.mass]
+# Column	smaPlmin	(F5.2)	Approximate semi-major axis of the planet if the mass is M_planet_min (sma_planet_min)	[ucd=phys.angSize;src]
+# Column	rhoPlmin	(F6.2)	Planet-to-star angular separation at sma_planet_min (rho_planet_min)	[ucd=pos.angDistance]
+# Column	WDS	(A17)	Name of the star in the WDS catalog (if found) (WDS_ID)	[ucd=meta.id]
+# Column	NSSflag	(I1)	[0/3]? Flag indicating the type of solution determined in the Gaia non-single star catalog (see Gaia Collaboration, Arenou et al., 2023A&A...674A..34G) (NSS_flag) (2)	[ucd=meta.code.error;meta.table]
+# Column	NPlNEA	(I1)	? Number of planets found in the Nasa Exoplanet Archive (N_planeta_NEA)	[ucd=meta.number]
+PICname StarName Plx pm pmRA pmDE ra dec posEpoch refEpoch Gmag_1 EBPRP Teff Radius Mass distance tPICplanetFlag NSSFlag BPmag RPmag VmagCalculated BOLnCameraObsNCAM_T BOLrandomSysNSRNCAM_T gaia_id GaiaDR3 Gmag_2 MstarFlame smaPlmin RUWE Mplmin
+"PIC 2539005000131" "Gaia DR3 2884087104955208064" 25.50682258605957 136.42185579257637 -112.24038897964404 77.54365105918541 89.36851636031241 -37.84761011251653 2028.300048828125 2016.0 8.973350524902344 0.00144743129003184 4957.35469125924 0.767511857056971 0.787616427148427 39.1863 128 0 9.45514965057373 8.330991744995117 9.238516807556152 24 17.22 2884087104955208064 2884087104955208064 8.97 0.788 1.94 1.408 4.7
+"PIC 2789027000045" "Gaia DR3 4781553628548774656" 18.124160766601562 158.65099459250115 -67.27743212197004 -143.67980098908663 66.21043715159537 -50.62331894173404 2028.300048828125 2016.0 7.514363807555797 0.00181059408127979 5523.50112860525 1.63422847062706 1.15752565364007 55.1457 4 3 7.873700141906738 6.984800338745117 7.686782360076904 12 14.11 4781553628548774656 4781553628548774656 7.51 1.000 2.10 1.509 12.3
+"PIC 2778844000048" "Gaia DR3 4784805056230587392" 49.179786682128906 558.3794806151474 -444.2372096805122 -338.2912146469582 71.40530148306857 -50.0768600361188 2028.300048828125 2016.0 7.353202269589508 0.000951136958348915 5110.64815805947 0.777981075835531 0.815596704097983 20.331 0 0 7.793331146240234 6.739973068237305 7.588645935058594 12 13.3 4784805056230587392 4784805056230587392 7.35 0.792 1.94 1.537 4.0
+"PIC 2475420000008" "Gaia DR3 4867169094309859456" 19.226903915405273 155.47097436188642 70.5483257499306 138.54298106694552 72.29000719462418 -35.08228579053319 2028.300048828125 2016.0 7.616117338197163 0.0018490860089181 6189.89757769642 1.15420187388216 1.1445968683152 51.9826 0 17 7.867594242095947 7.1934661865234375 7.7196364402771 6 18.53 4867169094309859456 4867169094309859456 7.61 1.120 2.18 1.519 13.1
+"PIC 2751018000100" "Gaia DR3 5554191685020871424" 32.61320114135742 104.08422174915758 -101.46047751477703 -23.222762962258262 91.19329585125237 -48.458478640226836 2028.300048828125 2016.0 7.047578614240055 0.00127203725461719 5296.4334893114 1.23977383657243 1.00276278028318 30.6576 0 3 7.414762496948242 6.43935489654541 7.252079486846924 24 11.38 5554191685020871424 5554191685020871424 7.04 0.911 2.04 2.015 9.5
